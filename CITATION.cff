@@ -15,6 +15,8 @@ preferred-citation:
     - family-names: "Al Sahab"
       given-names: "Sameer"
       affiliation: "East West University, Dhaka, Bangladesh"
+      orcid: "https://orcid.org/0009-0004-2707-8681"
   year: 2026
+  doi: "10.5281/zenodo.22982388"
   url: "https://github.com/SameerAlSahab/Hydra-ESP/blob/main/paper/hydra_esp_paper.pdf"
   notes: "Codes and papers are available in this repository."
