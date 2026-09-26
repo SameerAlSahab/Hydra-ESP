@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this firmware or the accompanying paper, please cite both as below."
+title: "Hydra-ESP: A Wireless Security Research Firmware for the ESP32"
+authors:
+  - family-names: "Al Sahab"
+    given-names: "Sameer"
+    affiliation: "East West University, Dhaka, Bangladesh"
+repository-code: "https://github.com/SameerAlSahab/Hydra-ESP"
+license: "GPL-3.0"
+date-released: 2026-09-26
+preferred-citation:
+  type: article
+  title: "Low-Cost IEEE 802.11 and Bluetooth Attack Surfaces on Commodity Microcontrollers: A Case Study of the ESP32 Platform"
+  authors:
+    - family-names: "Al Sahab"
+      given-names: "Sameer"
+      affiliation: "East West University, Dhaka, Bangladesh"
+  year: 2026
+  url: "https://github.com/SameerAlSahab/Hydra-ESP/blob/main/paper/hydra_esp_paper.pdf"
+  notes: "Codes and papers are available in this repository."
