@@ -1,17 +1,15 @@
-<table border="0" style="border: none; border-collapse: collapse;">
-  <tr style="border: none;">
-    <td width="200" align="center" valign="middle" style="border: none;">
-      <img src="resources/hydra_logo.png" alt="Hydra-ESP logo" width="180"/>
-    </td>
-    <td valign="middle" style="border: none;">
-      <div style="font-size: 2em; font-weight: bold; margin-bottom: 4px;">Hydra-ESP</div>
-      <div style="font-weight: bold; margin-bottom: 12px;">wifi + bt test tool for the ESP32</div>
-      <p style="margin: 0; line-height: 1.5;">
-        Built on top of <a href="https://github.com/risinek/esp32-wifi-penetration-tool">risinek's</a> esp32-wifi-penetration-tool. Redesigned web UI, multi-target deauth, BLE attacks, a deauth detector, optional OLED, and a bunch of extra modules on top of the original.
-      </p>
-    </td>
-  </tr>
-</table>
+<div align="center">
+
+  <img src="resources/hydra_logo.png" alt="Hydra-ESP Logo" width="220"/>
+
+  # Hydra-ESP
+  **Wi-Fi + BT Security Research Tool for ESP32**
+
+<p width="80%">
+Extended with a redesigned web UI, multi-target deauth, BLE attacks, HID keystroke payloads, an aggressive Evil Twin module with password verification and Wi-Fi cloning, Ghost Probe, Wi-Fi beacon spam, Clientless PMKID Capture, WPA Handshake Capture, a deauth attack detector, optional OLED display support, and various security research modules.
+</p>
+
+<br/>
 
 <p>
 <a href="https://github.com/SameerAlSahab/Hydra-ESP/actions/workflows/build_page.yml"><img src="https://img.shields.io/github/actions/workflow/status/SameerAlSahab/Hydra-ESP/build_page.yml?branch=main&style=flat-square&label=pages%20build" alt="pages build status"></a>
