@@ -3,219 +3,311 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Hydra-ESP — Aggressive Wireless Security Research Firmware</title>
+<title>Hydra-ESP — Documentation</title>
 <style>
 :root{
-  --bg:#ffffff; --bg-sidebar:#f6f7f9; --bg-code:#f2f4f7; --border:#e3e5e8;
-  --text:#1c1c1e; --text-dim:#5b6069; --accent:#2f6fed; --accent-dim:#e8effe;
-  --warn-bg:#fdf3f2; --warn-border:#c0392b; --warn-text:#8a2e24;
+  --bg:#fbfaf7; --panel:#f2f0ea; --line:#d8d4c8; --line-strong:#b8b2a0;
+  --ink:#232019; --ink-dim:#635c4d; --accent:#a8651b; --accent-ink:#6e4212;
+  --code-bg:#efece2; --warn-bg:#fbeee0; --warn-line:#a8651b; --ok-bg:#eef1e4; --ok-line:#5d7a3a;
+}
+:root:not([data-theme="light"]) {
+  --bg:#151310; --panel:#1c1a15; --line:#332f26; --line-strong:#4a4433;
+  --ink:#e9e4d6; --ink-dim:#a89e88; --accent:#e0a256; --accent-ink:#f0bd7f;
+  --code-bg:#211e17; --warn-bg:#2a2016; --warn-line:#e0a256; --ok-bg:#1c2118; --ok-line:#8fae62;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#15161a; --bg-sidebar:#1b1c21; --bg-code:#1f2126; --border:#2b2d33;
-    --text:#e7e8ea; --text-dim:#9a9ea6; --accent:#6d9bff; --accent-dim:#1c2740;
-    --warn-bg:#2a1917; --warn-border:#c0392b; --warn-text:#e79b93;
+    --bg:#151310; --panel:#1c1a15; --line:#332f26; --line-strong:#4a4433;
+    --ink:#e9e4d6; --ink-dim:#a89e88; --accent:#e0a256; --accent-ink:#f0bd7f;
+    --code-bg:#211e17; --warn-bg:#2a2016; --warn-line:#e0a256; --ok-bg:#1c2118; --ok-line:#8fae62;
   }
 }
-:root[data-theme="dark"]{
-  --bg:#15161a; --bg-sidebar:#1b1c21; --bg-code:#1f2126; --border:#2b2d33;
-  --text:#e7e8ea; --text-dim:#9a9ea6; --accent:#6d9bff; --accent-dim:#1c2740;
-  --warn-bg:#2a1917; --warn-border:#c0392b; --warn-text:#e79b93;
-}
 *{box-sizing:border-box}
-html{scroll-padding-top:calc(56px + env(safe-area-inset-top,0px))}
+html{scroll-padding-top:64px}
 body{
-  margin:0; background:var(--bg); color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  font-size:16px; line-height:1.65;
-  padding-top:env(safe-area-inset-top,0px);
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Iowan Old Style","Georgia","Times New Roman",serif;
+  font-size:16.5px; line-height:1.68;
   padding-bottom:env(safe-area-inset-bottom,0px);
 }
-code,pre,.mono{font-family:SFMono-Regular,Consolas,"Liberation Mono",Menlo,monospace}
+code,pre,.mono,.num{font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace}
+h1,h2,h3,.brand,nav,.topbar,button,.tag,th{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 
-/* top bar */
+
 .topbar{
-  position:sticky; top:0; z-index:20; height:56px;
-  padding-top:env(safe-area-inset-top,0px);
-  display:flex; align-items:center; gap:.6rem;
-  background:var(--bg); border-bottom:1px solid var(--border);
+  border-bottom:2px solid var(--ink);
+  padding:.7rem 1.2rem;
+  display:flex;align-items:center;gap:1rem;
+  background:var(--bg);
 }
-.topbar-inner{display:flex;align-items:center;gap:.6rem;width:100%;padding:0 1rem;height:56px}
-.burger{display:none;background:none;border:1px solid var(--border);border-radius:6px;width:34px;height:34px;color:var(--text);font-size:1rem;cursor:pointer}
-.brand{font-weight:700;font-size:1.02rem;text-decoration:none;color:var(--text);display:flex;align-items:center;gap:.5rem}
-.brand .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
-.ver{font-size:.72rem;color:var(--text-dim);border:1px solid var(--border);border-radius:4px;padding:1px 6px;margin-left:.2rem}
-.topbar-links{margin-left:auto;display:flex;gap:1.1rem;font-size:.9rem}
-.topbar-links a{color:var(--text-dim);text-decoration:none}
-.topbar-links a:hover{color:var(--accent)}
+.brand{font-weight:800;letter-spacing:-.01em;font-size:1.05rem;color:var(--ink);text-decoration:none}
+.brand .rev{font-size:.68rem;font-weight:600;color:var(--ink-dim);border:1px solid var(--line-strong);padding:1px 5px;margin-left:.45rem;letter-spacing:.02em}
+.topbar-links{margin-left:auto;display:flex;gap:1.1rem;font-size:.82rem}
+.topbar-links a{color:var(--ink-dim);text-decoration:none;text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+.topbar-links a:hover{color:var(--accent-ink)}
+.burger{display:none;background:none;border:1px solid var(--line-strong);width:32px;height:32px;color:var(--ink);cursor:pointer;font-family:inherit}
 
-/* layout */
-.layout{display:flex;max-width:1180px;margin:0 auto}
+
+.docmeta{border-bottom:1px solid var(--line);background:var(--panel);font-size:.78rem;color:var(--ink-dim);
+  display:flex;flex-wrap:wrap;gap:0;font-family:-apple-system,sans-serif}
+.docmeta div{padding:.5rem 1.2rem;border-right:1px solid var(--line)}
+.docmeta b{color:var(--ink);font-weight:700;display:block;font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:1px}
+
+.layout{display:flex;max-width:1240px;margin:0 auto}
 .sidebar{
-  width:230px;flex:none;position:sticky;
-  top:56px;height:calc(100vh - 56px);overflow-y:auto;
-  border-right:1px solid var(--border);background:var(--bg-sidebar);
-  padding:1.4rem 1rem;
+  width:252px;flex:none;position:sticky;top:0;
+  align-self:flex-start;max-height:100vh;overflow-y:auto;
+  border-right:1px solid var(--line);
+  padding:1.6rem 0 4rem 1.2rem;
+  font-family:-apple-system,sans-serif;
 }
-.sidebar h4{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim);margin:1.1rem 0 .4rem;font-weight:600}
-.sidebar h4:first-child{margin-top:0}
-.sidebar a{display:block;color:var(--text-dim);text-decoration:none;font-size:.88rem;padding:.28rem 0}
-.sidebar a:hover{color:var(--accent)}
-.content{flex:1;min-width:0;padding:2.4rem 2.4rem 5rem;max-width:800px}
-.content h1{font-size:1.9rem;margin:0 0 .4rem}
-.content h2{font-size:1.35rem;margin:2.6rem 0 .8rem;padding-top:.4rem;border-top:1px solid var(--border)}
-.content h2:first-of-type{border-top:none;padding-top:0;margin-top:1.6rem}
-.content h3{font-size:1.05rem;margin:1.6rem 0 .5rem}
-.content p{color:var(--text);max-width:70ch}
-.lede{color:var(--text-dim);font-size:1.05rem;max-width:60ch}
-a{color:var(--accent)}
-.badges{display:flex;gap:.5rem;flex-wrap:wrap;margin:1rem 0 0}
-.badges a{border:1px solid var(--border);border-radius:6px;padding:.35rem .7rem;font-size:.8rem;text-decoration:none;color:var(--text-dim)}
-.badges a:hover{border-color:var(--accent);color:var(--accent)}
+.sidebar .grp{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-dim);margin:1.3rem 0 .35rem;font-weight:700}
+.sidebar .grp:first-child{margin-top:0}
+.sidebar a{display:block;color:var(--ink-dim);text-decoration:none;font-size:.86rem;padding:.22rem 0;border-left:2px solid transparent;padding-left:.6rem;margin-left:-.6rem}
+.sidebar a.sub{padding-left:1.5rem;font-size:.82rem}
+.sidebar a:hover{color:var(--accent-ink);border-left-color:var(--accent)}
+.sidebar .n{color:var(--ink-dim);display:inline-block;width:1.6em;font-family:inherit}
 
-.callout{border:1px solid var(--border);border-left:3px solid var(--accent);background:var(--accent-dim);border-radius:6px;padding:.9rem 1.1rem;margin:1.2rem 0;font-size:.92rem}
-.callout b{display:block;margin-bottom:.25rem}
-.warn{border:1px solid var(--warn-border);border-left:3px solid var(--warn-border);background:var(--warn-bg);color:var(--warn-text);border-radius:6px;padding:1rem 1.2rem;margin:1.2rem 0;font-size:.92rem}
-.warn b{display:block;margin-bottom:.3rem;color:var(--warn-text)}
-.warn a{color:var(--warn-text);text-decoration:underline}
+.content{flex:1;min-width:0;padding:2.4rem 3rem 6rem;max-width:820px}
+h1{font-size:2rem;margin:0 0 .3rem;font-weight:800;letter-spacing:-.01em}
+h2{font-size:1.4rem;margin:2.8rem 0 .3rem;font-weight:800;padding-bottom:.5rem;border-bottom:2px solid var(--ink)}
+h2 .num{color:var(--ink-dim);font-weight:600;margin-right:.5rem}
+h2:first-of-type{margin-top:1.4rem}
+h3{font-size:1.05rem;margin:1.9rem 0 .4rem;font-weight:700}
+h3 .num{color:var(--ink-dim);font-weight:600;margin-right:.4rem;font-family:monospace;font-size:.9em}
+p{color:var(--ink);max-width:68ch}
+.lede{color:var(--ink-dim);font-size:1.08rem;max-width:58ch;font-family:-apple-system,sans-serif}
+a{color:var(--accent-ink)}
+ul,ol{max-width:68ch}
+li{margin:.25rem 0}
 
-table{width:100%;border-collapse:collapse;font-size:.88rem;margin:1rem 0}
-th,td{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--border);vertical-align:top}
-th{color:var(--text-dim);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.03em}
-td.mono{white-space:nowrap}
+table{width:100%;border-collapse:collapse;font-size:.88rem;margin:1rem 0;font-family:-apple-system,sans-serif}
+th,td{text-align:left;padding:.5rem .7rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--ink-dim);font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;width:26%}
+td.mono{font-family:monospace}
 
-pre{background:var(--bg-code);border:1px solid var(--border);border-radius:8px;padding:1rem;overflow-x:auto;font-size:.85rem;line-height:1.55}
-code.inline{background:var(--bg-code);border:1px solid var(--border);border-radius:4px;padding:.05rem .35rem;font-size:.87em}
+pre{background:var(--code-bg);border:1px solid var(--line);border-radius:2px;padding:.9rem 1rem;overflow-x:auto;font-size:.83rem;line-height:1.55}
+code.inline{background:var(--code-bg);border:1px solid var(--line);border-radius:2px;padding:.05rem .35rem;font-size:.87em;font-family:monospace}
 
-.attack{border:1px solid var(--border);border-radius:8px;padding:1rem 1.2rem;margin:.9rem 0}
-.attack h3{margin:0 0 .35rem;font-size:1rem}
-.attack p{margin:0;color:var(--text-dim);font-size:.92rem}
-.tag{display:inline-block;font-size:.7rem;border:1px solid var(--border);border-radius:4px;padding:1px 6px;color:var(--text-dim);margin-left:.4rem}
+.note,.warn,.ok{border:1px solid var(--line);border-left:4px solid var(--line-strong);padding:.85rem 1.1rem;margin:1.1rem 0;font-size:.9rem;font-family:-apple-system,sans-serif}
+.warn{background:var(--warn-bg);border-left-color:var(--warn-line)}
+.ok{background:var(--ok-bg);border-left-color:var(--ok-line)}
+.note b,.warn b,.ok b{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3rem}
 
-.step{display:flex;gap:.9rem;margin:1rem 0}
-.step-n{flex:none;width:24px;height:24px;border-radius:50%;background:var(--accent-dim);color:var(--accent);font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:center}
-.step div p{margin:.2rem 0 0}
 
-footer{border-top:1px solid var(--border);padding:2rem 2.4rem 3rem;color:var(--text-dim);font-size:.85rem;max-width:800px}
-footer a{color:var(--text-dim)}
-footer a:hover{color:var(--accent)}
+.mod{padding:1rem 0;border-top:1px solid var(--line)}
+.mod:first-of-type{border-top:none;padding-top:.4rem}
+.mod h3{margin-top:0}
+.mod p{color:var(--ink-dim);margin:.3rem 0}
+.mod ul{color:var(--ink-dim);font-size:.94rem;margin:.5rem 0 0}
+.tag{display:inline-block;font-size:.66rem;border:1px solid var(--line-strong);padding:1px 6px;color:var(--ink-dim);margin-left:.4rem;text-transform:uppercase;letter-spacing:.03em;vertical-align:middle;font-family:-apple-system,sans-serif}
 
-@media (max-width: 860px){
-  .sidebar{position:fixed;left:0;top:56px;height:calc(100vh - 56px);width:240px;transform:translateX(-100%);transition:transform .2s ease;z-index:15;box-shadow:0 0 0 rgba(0,0,0,0)}
-  .sidebar.open{transform:translateX(0);box-shadow:2px 0 12px rgba(0,0,0,.15)}
-  .burger{display:block}
+.badges{display:flex;gap:.4rem;flex-wrap:wrap;margin:1.1rem 0 0;font-family:monospace;font-size:.78rem}
+.badges span{border:1px solid var(--line-strong);padding:.28rem .6rem;color:var(--ink-dim)}
+.badges span b{color:var(--ink);font-weight:700}
+
+footer{border-top:2px solid var(--ink);padding:2rem 3rem 3rem;color:var(--ink-dim);font-size:.83rem;max-width:820px;font-family:-apple-system,sans-serif}
+footer a{color:var(--ink-dim)}
+footer a:hover{color:var(--accent-ink)}
+
+@media (max-width: 900px){
+  .sidebar{position:fixed;left:0;top:0;padding-top:5.2rem;height:100vh;width:260px;background:var(--bg);
+    transform:translateX(-100%);transition:transform .18s ease;z-index:15;border-right:1px solid var(--line)}
+  .sidebar.open{transform:translateX(0)}
   .content{padding:1.6rem 1.2rem 4rem}
   .topbar-links{display:none}
+  .burger{display:block}
+  .docmeta div{border-right:none;border-bottom:1px solid var(--line);width:100%}
 }
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <div class="topbar-inner">
-    <button class="burger" id="burger" aria-label="Toggle menu">≡</button>
-    <a class="brand" href="#top"><span class="dot"></span>Hydra-ESP<span class="ver">v1.1.3</span></a>
-    <div class="topbar-links">
-      <a href="https://github.com/SameerAlSahab/Hydra-ESP" target="_blank" rel="noopener">GitHub</a>
-      <a href="https://github.com/SameerAlSahab/Hydra-ESP/releases" target="_blank" rel="noopener">Releases</a>
-      <a href="#legal">Legal</a>
-    </div>
+  <button class="burger" id="burger" aria-label="Toggle menu">=</button>
+  <a class="brand" href="#top">HYDRA-ESP<span class="rev">rev 1.1.3</span></a>
+  <div class="topbar-links">
+    <a href="https://github.com/SameerAlSahab/Hydra-ESP" target="_blank" rel="noopener">Source</a>
+    <a href="https://github.com/SameerAlSahab/Hydra-ESP/releases" target="_blank" rel="noopener">Releases</a>
+    <a href="https://github.com/SameerAlSahab/Hydra-ESP/discussions" target="_blank" rel="noopener">Discussions</a>
+    <a href="#legal">Legal</a>
   </div>
+</div>
+
+<div class="docmeta">
+  <div><b>Platform</b>ESP32 (Xtensa LX6)</div>
+  <div><b>License</b>GPL-3.0</div>
+  <div><b>Base</b>risinek/esp32-wifi-penetration-tool</div>
+  <div><b>Maintainer</b>Sameer Al Sahab</div>
+  <div><b>Type</b>Wi-Fi / BT security research firmware</div>
 </div>
 
 <div class="layout">
   <nav class="sidebar" id="sidebar">
-    <h4>Overview</h4>
-    <a href="#top">Introduction</a>
-    <a href="#whats-new">What's new since v1.0</a>
-    <a href="#hardware">Hardware</a>
-    <h4>Attacks</h4>
-    <a href="#wifi-attacks">Wi-Fi modules</a>
-    <a href="#ble-attacks">Bluetooth / BLE modules</a>
-    <a href="#detector">Deauth detector</a>
-    <h4>Using it</h4>
-    <a href="#web-ui">Web interface</a>
-    <a href="#install">Installation</a>
-    <h4>Reference</h4>
-    <a href="#legal">Legal &amp; ethics</a>
-    <a href="#credits">Credits</a>
-    <a href="#links">Links</a>
+    <div class="grp">Start here</div>
+    <a href="#top"><span class="n">1</span>Overview</a>
+    <a href="#whats-new"><span class="n">2</span>What changed since v1.0</a>
+    <a href="#hardware"><span class="n">3</span>Hardware</a>
+    <a href="#how-it-works"><span class="n">4</span>How it works</a>
+
+    <div class="grp">Wi-Fi modules</div>
+    <a href="#wifi-attacks"><span class="n">5</span>Overview</a>
+    <a class="sub" href="#deauth">5.1 Deauthentication</a>
+    <a class="sub" href="#handshake">5.2 Handshake capture</a>
+    <a class="sub" href="#pmkid">5.3 PMKID capture</a>
+    <a class="sub" href="#beacon">5.4 Beacon spam</a>
+    <a class="sub" href="#ghost">5.5 Ghost mode</a>
+    <a class="sub" href="#eviltwin">5.6 Evil Twin</a>
+    <a class="sub" href="#superclone">5.7 Super Clone</a>
+
+    <div class="grp">Bluetooth modules</div>
+    <a href="#ble-attacks"><span class="n">6</span>Overview</a>
+    <a class="sub" href="#blespam">6.1 BLE spam</a>
+    <a class="sub" href="#btpayload">6.2 BT payload</a>
+
+    <div class="grp">Defense</div>
+    <a href="#detector"><span class="n">7</span>Deauth detector</a>
+
+    <div class="grp">Using it</div>
+    <a href="#web-ui"><span class="n">8</span>Web interface</a>
+    <a href="#install"><span class="n">9</span>Build &amp; install</a>
+
+    <div class="grp">Reference</div>
+    <a href="#citation"><span class="n">10</span>Citation</a>
+    <a href="#legal"><span class="n">11</span>Legal &amp; ethics</a>
+    <a href="#credits"><span class="n">12</span>Credits</a>
+    <a href="#links"><span class="n">13</span>Links</a>
   </nav>
 
   <main class="content" id="top">
     <h1>Hydra-ESP</h1>
-    <p class="lede">A wireless security research firmware for the ESP32. Runs its own management access point and web interface, and packs Wi-Fi and Bluetooth attack modules used for testing networks and devices you own or are authorized to test.</p>
+    <p class="lede">A wireless security research firmware for the ESP32. Runs its own management access point and web UI, with Wi-Fi and Bluetooth attack modules for testing networks and devices you own, or are explicitly authorized to test.</p>
     <div class="badges">
-      <a href="https://github.com/SameerAlSahab/Hydra-ESP" target="_blank" rel="noopener">★ Star on GitHub</a>
-      <a href="https://github.com/SameerAlSahab/Hydra-ESP/releases" target="_blank" rel="noopener">Latest release</a>
-      <a href="https://github.com/SameerAlSahab/Hydra-ESP/blob/main/LICENSE" target="_blank" rel="noopener">License</a>
-      <a href="#links">Companion paper</a>
+      <span><b>rev</b> 1.1.3</span>
+      <span><b>license</b> GPL-3.0</span>
+      <span><b>chip</b> ESP32</span>
+      <span><b>radios</b> Wi-Fi + BLE</span>
     </div>
 
+    <h2 id="whats-new"><span class="num">2</span>What changed since v1.0</h2>
+    <p>v1.0 (the video with 62K+ views) was mostly deauth + a plain web UI. Since then:</p>
+    <ul>
+      <li>Redesigned web interface — same <code class="inline">192.168.4.1</code> flow, new layout and theme.</li>
+      <li>Deauth is no longer one fixed method — four selectable modes, including a BSSID-clone mode that gets around 802.11w/MFP.</li>
+      <li>Evil Twin now actually verifies a captured password against the real AP before reporting it, instead of logging whatever gets typed.</li>
+      <li>BLE spam expanded to 25 selectable device-pairing signatures across Apple, Samsung, and Google.</li>
+      <li>BT payload module added — Bluetooth HID keyboard spoofing with five built-in payloads.</li>
+      <li>Deauth attack detector added — the one purely defensive module in the firmware.</li>
+      <li>Optional SSD1306 OLED support for status without the web UI.</li>
+    </ul>
 
-    <h2 id="hardware">Hardware</h2>
+    <h2 id="hardware"><span class="num">3</span>Hardware</h2>
     <table>
-      <tr><th>Required</th><td>ESP32 DevKit V1, or any board on the same Xtensa LX6 chip (e.g. ESP32-WROOM-32, ESP32-WROVER)</td></tr>
-      <tr><th>Not supported</th><td>ESP32-S2, S3, C3 and other variants — different radio hardware</td></tr>
-      <tr><th>Optional</th><td>SSD1306 OLED (128×64, I2C) — auto-detected on boot, shows attack status and captured passwords</td></tr>
+      <tr><th>Required</th><td>ESP32 DevKit V1, or any board on the same Xtensa LX6 dual-core chip — ESP32-WROOM-32 and ESP32-WROVER modules are expected to work.</td></tr>
+      <tr><th>Not supported</th><td>ESP32-S2, S3, C3, and other variants — different radio hardware, won't run this firmware.</td></tr>
+      <tr><th>Optional</th><td>SSD1306 OLED, 128×64, I2C. Auto-detected on boot; shows attack timers, status, menu, and captured Evil Twin passwords. If it's not connected, init is skipped quietly and nothing else is affected.</td></tr>
     </table>
 
-    <h2 id="wifi-attacks">Wi-Fi modules</h2>
+    <h2 id="how-it-works"><span class="num">4</span>How it works</h2>
+    <p>On boot the ESP32 starts its own management access point. Connect a phone or laptop to it and open <code class="inline">http://192.168.4.1</code> — the UI is served straight off the device's flash (SPIFFS), no internet connection needed.</p>
+    <p>Some modules (Deauth, Evil Twin, Super Clone) need the radio to themselves, so the management AP goes down while they run — you'll lose the web UI connection for the duration. Set a timeout and it comes back on its own; leave it unset and you'll need to power cycle the board to stop the attack and get access back.</p>
 
-    <div class="attack">
-      <h3>Deauthentication</h3>
-      <p>Sends forged deauth/disassociation frames to drop up to 16 targets at once. Frames-only or frames+disassoc mode. Doesn't work against clients with 802.11w (MFP) enabled — see BSSID Clone below.</p>
-    </div>
-    <div class="attack">
-      <h3>WPA Handshake Capture</h3>
-      <p>Forces a re-auth with a short deauth burst, then records the resulting 4-way handshake to <code class="inline">.pcap</code> / <code class="inline">.hccapx</code> for offline auditing with Hashcat or Aircrack-ng. Needs a connected client present.</p>
-    </div>
-    <div class="attack">
-      <h3>Clientless PMKID Capture <span class="tag">no client needed</span></h3>
-      <p>Grabs the PMKID from the first EAPOL frame during association — works with just the AP in range, no connected client required. Auditable offline with Hashcat mode 22000.</p>
-    </div>
-    <div class="attack">
-      <h3>Evil Twin <span class="tag">verifies password</span></h3>
-      <p>Clones the target SSID as an open AP and deauths the real one, pausing once a client joins the clone. A captive portal collects the password — then the firmware actually connects to the real AP with it to confirm it's correct before reporting anything, retrying on a wrong guess instead of just logging whatever was typed.</p>
-    </div>
-    <div class="attack">
-      <h3>BSSID Clone (Twin-Deauth) <span class="tag">bypasses MFP</span></h3>
-      <p>Clones SSID, BSSID, and channel so the real AP and the clone look identical. Clients drop the connection from the resulting address conflict rather than a forged frame — which is why it still works against 802.11w/WPA3-hardened clients.</p>
-    </div>
-    <div class="attack">
-      <h3>SSID Cloner</h3>
-      <p>Stands up several APs sharing the target's SSID (differentiated by trailing whitespace). Adds to the same visual confusion as beacon spam.</p>
-    </div>
-    <div class="attack">
-      <h3>Beacon Spam</h3>
-      <p>Floods the area with 1–100 fake beacon frames carrying randomized SSIDs, cluttering every nearby scan list.</p>
-    </div>
-    <div class="attack">
-      <h3>Ghost Mode (probe harvesting)</h3>
-      <p>Listens for the SSIDs nearby devices probe for from their saved-network list, then advertises those exact names so devices try to auto-reconnect to the ESP32 instead.</p>
+    <h2 id="wifi-attacks"><span class="num">5</span>Wi-Fi modules</h2>
+
+    <div class="mod">
+      <h3 id="deauth"><span class="num">5.1</span>Deauthentication</h3>
+      <p>Sends forged 802.11 deauth frames to drop clients off a target AP. Up to 16 targets at once.</p>
+      <ul>
+        <li><b>Normal Deauth</b> — plain deauth frames, the standard method.</li>
+        <li><b>Combined Deauth</b> — deauth + disassociation frames together.</li>
+        <li><b>Multi-Clone Deauth</b> — runs across several cloned identities instead of one.</li>
+        <li><b>BSSID Clone (Aggressive)</b> — clones SSID + BSSID onto the ESP32 on the same channel, so the real AP and the clone look identical. Drops clients through address collision rather than a raw deauth frame, which is why it still works against 802.11w/MFP-hardened devices.</li>
+      </ul>
+      <p>Default timeout 2 minutes, adjustable 1–255. Disable the timeout and it runs until you power cycle the device.</p>
     </div>
 
-    <h2 id="ble-attacks">Bluetooth / BLE modules</h2>
-
-    <div class="attack">
-      <h3>BLE Spam</h3>
-      <p>Broadcasts BLE advertisements mimicking Apple, Samsung, and Google proximity-pairing payloads — AirPods, Galaxy Buds, Apple TV/HomePod setup, Vision Pro, and more. Triggers the matching OS-level popup on nearby devices. Target type is selectable; MAC rotation supported.</p>
-    </div>
-    <div class="attack">
-      <h3>BT Payload</h3>
-      <p>Advertises the ESP32 as a Bluetooth HID keyboard (<code class="inline">Hydra-#####</code>). Once a host manually pairs, it runs a pre-set keystroke payload — bundled options range from a harmless sound prank to a script that reads a Windows host's saved Wi-Fi passwords via <code class="inline">netsh</code> and posts them back to the device.</p>
+    <div class="mod">
+      <h3 id="handshake"><span class="num">5.2</span>WPA Handshake Capture</h3>
+      <p>Forces a reconnect, records the resulting WPA2 4-way handshake as <code class="inline">.pcap</code> and <code class="inline">.hccapx</code> for offline auditing with Hashcat or Aircrack-ng. A connected client on the target network is required.</p>
+      <ul>
+        <li><b>Normal Deauth</b> / <b>BSSID Clone (Aggressive)</b> — force a reconnect the same way the Deauth module does.</li>
+        <li><b>Silent Capture</b> — no forced disconnect, just waits for a client to reconnect naturally.</li>
+      </ul>
     </div>
 
-    <h2 id="detector">Deauth attack detector</h2>
-    <p>The one defensive module: puts the radio into promiscuous monitor mode and watches for more than 10 deauth frames from one BSSID within a second, or any deauth frame from the reserved broadcast source <code class="inline">00:00:00:00:00:00</code> — both are recognized signatures of an active deauth attack. Results show up in a live log in the web UI. It can't run at the same time as an attack module, since both need exclusive use of the one radio.</p>
+    <div class="mod">
+      <h3 id="pmkid"><span class="num">5.3</span>Clientless PMKID Capture <span class="tag">no client needed</span></h3>
+      <p>Pulls the PMKID from the first EAPOL-Key frame during association — only the AP needs to be in range, no connected client required. Compatible with Hashcat hash mode 22000. Most modern WPA2 APs leak this; some don't include it at all.</p>
+    </div>
 
-    <h2 id="web-ui">Web interface</h2>
+    <div class="mod">
+      <h3 id="beacon"><span class="num">5.4</span>Beacon Spam</h3>
+      <p>Floods the area with 1–100 fake 802.11 beacon frames, cluttering the Wi-Fi scan list on every nearby device. Default timeout 5 minutes.</p>
+      <ul>
+        <li><b>Common Names</b> — everyday-looking SSIDs, blends into normal noise.</li>
+        <li><b>Random Strings</b> — obviously-fake gibberish SSIDs.</li>
+        <li><b>Rick Roll Mode</b> — exactly what it sounds like.</li>
+        <li><b>Security Names</b> — SSIDs styled to look like security/surveillance gear.</li>
+      </ul>
+    </div>
+
+    <div class="mod">
+      <h3 id="ghost"><span class="num">5.5</span>Ghost Mode <span class="tag">probe harvesting</span></h3>
+      <p>Listens for the SSIDs nearby devices are probing for from their own saved-network lists, then advertises those exact names back, so devices try to auto-connect to the ESP32 instead of their real saved network. No configurable mode — just run it. Default timeout 5 minutes.</p>
+    </div>
+
+    <div class="mod">
+      <h3 id="eviltwin"><span class="num">5.6</span>Evil Twin <span class="tag">verifies password</span></h3>
+      <p>Labeled "Devil Twin" in the UI. Stands up an open clone of the target AP (same SSID, no password) and deauths the real one at the same time to push clients onto the clone. Runs its own DNS server so every request from a connected client is redirected to a captive portal — a fake update-style page asking for the network password.</p>
+      <p>A submitted password isn't just logged blind: the firmware attempts a real connection to the target AP with it to confirm it's correct. Wrong guess → logged as a failed attempt, victim is sent back to the portal. Correct guess → captured, verified, and shown in the web UI.</p>
+      <p>Default timeout 5 minutes. Web UI is unreachable while this runs.</p>
+    </div>
+
+    <div class="mod">
+      <h3 id="superclone"><span class="num">5.7</span>Super Clone</h3>
+      <p>The SSID-cloning module — stands up several APs sharing (near-)identical SSIDs by padding the real name with trailing spaces, so a scan list shows what looks like duplicate copies of the same network. One mode: <b>Open Multiple Clones</b>. Default timeout 5 minutes.</p>
+    </div>
+
+    <h2 id="ble-attacks"><span class="num">6</span>Bluetooth / BLE modules</h2>
+
+    <div class="mod">
+      <h3 id="blespam"><span class="num">6.1</span>BLE Spam</h3>
+      <p>Broadcasts BLE advertisement packets mimicking Apple, Samsung, and Google proximity-pairing signals — nearby iPhones, iPads, and Android devices show pairing popups as if a real accessory were in range. Default timeout 15 minutes, MAC address rotates every run.</p>
+      <table>
+        <tr><th>Apple Audio</th><td>8 modes — AirPods, AirPods Pro, AirPods Max, Beats-style pairing popups</td></tr>
+        <tr><th>Apple Setup</th><td>5 modes — Apple TV, HomePod, Vision Pro-style setup prompts</td></tr>
+        <tr><th>Samsung</th><td>6 modes — Galaxy Buds variants 1–5, plus a random mode</td></tr>
+        <tr><th>Google</th><td>5 modes — Fast Pair variants 1–4, plus a random mode</td></tr>
+        <tr><th>Mixed Random</th><td>1 mode — picks across all of the above at random</td></tr>
+      </table>
+    </div>
+
+    <div class="mod">
+      <h3 id="btpayload"><span class="num">6.2</span>BT Payload</h3>
+      <p>Advertises the ESP32 as a Bluetooth HID keyboard under a random name (<code class="inline">HydraBT-####</code>) with a freshly randomized MAC each run. Once a host pairs with it, it types out one of five built-in payloads. Mostly aimed at Windows hosts — pair from Android with an app like nRF Connect.</p>
+      <ul>
+        <li><b>Write to Notepad</b> — opens Notepad, types a short message.</li>
+        <li><b>Play Rick Roll (YouTube)</b> — opens the default browser to a YouTube link.</li>
+        <li><b>Set Warning Wallpaper</b> — downloads an image, sets it as desktop wallpaper. May need a restart to fully apply; the host needs to be online to fetch the image.</li>
+        <li><b>Grab Wi-Fi Passwords</b> — reads saved Wi-Fi profiles off the host machine and posts them back over HTTP to the ESP32's own log endpoint, or a custom remote URL / RequestBin if one's set in the UI.</li>
+        <li><b>Hydra God Mode</b> — runs the bundled prank script (wallpaper swap + sound).</li>
+      </ul>
+      <div class="note">
+        <b>Extending this module</b>
+        All five payloads live as small keystroke-injection functions in <a href="https://github.com/SameerAlSahab/Hydra-ESP/blob/main/main/bt/bt_payload_attack.cpp" target="_blank" rel="noopener"><code class="inline">main/bt/bt_payload_attack.cpp</code></a>, wired into a switch statement in <code class="inline">execute_current_payload()</code>. To add one: write a <code class="inline">do_payload_N</code> function that presses/releases keys through <code class="inline">s_keyboard</code>, add a matching <code class="inline">case N:</code>, and add a button for it in <code class="inline">data/index.html</code> / <code class="inline">data/app.js</code> following the existing five. Standalone scripts a payload downloads and runs (like the two <code class="inline">.ps1</code> files already in the repo) belong in <a href="https://github.com/SameerAlSahab/Hydra-ESP/tree/main/payloads" target="_blank" rel="noopener"><code class="inline">/payloads</code></a> at the repo root — that's the place to drop new script files. PRs for new payloads are welcome, see <a href="https://github.com/SameerAlSahab/Hydra-ESP/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">CONTRIBUTING.md</a>.
+      </div>
+    </div>
+
+    <h2 id="detector"><span class="num">7</span>Deauth attack detector</h2>
+    <p>The one defensive module in the firmware. Puts the radio into promiscuous 802.11 monitor mode and watches raw management frames, flagging any source BSSID that sends more than 10 deauth frames within a second — the standard signature of an active deauth attack — and separately flagging broadcast deauth frames from the reserved source <code class="inline">00:00:00:00:00:00</code>. Results show up live in a log table in the web UI. It can't run alongside an attack module, since both need sole use of the one radio the board has.</p>
+
+    <h2 id="web-ui"><span class="num">8</span>Web interface</h2>
     <p>Connect to the device's AP and open <code class="inline">http://192.168.4.1</code>.</p>
     <table>
       <tr><th>Scan</th><td>Nearby SSIDs, BSSIDs, and signal strength — tap a row to select it as the target</td></tr>
-      <tr><th>Attack</th><td>Configure and launch any module, with live status and results</td></tr>
+      <tr><th>Attack</th><td>Configure and launch any module above, with live status, timer, and results</td></tr>
       <tr><th>Detector</th><td>Start/stop the deauth monitor and view the alert log</td></tr>
-      <tr><th>Settings</th><td>Change the management AP's SSID and password (device reboots on save)</td></tr>
+      <tr><th>Settings</th><td>Change the management AP's SSID and password — device reboots on save</td></tr>
       <tr><th>About</th><td>Firmware version, credits, legal notice</td></tr>
     </table>
     <table>
@@ -223,35 +315,35 @@ footer a:hover{color:var(--accent)}
       <tr><th>Default password</th><td class="mono">notforfun</td></tr>
       <tr><th>Web UI</th><td class="mono">192.168.4.1</td></tr>
     </table>
-    <p style="font-size:.88rem;color:var(--text-dim)">The management AP goes down during attacks that need exclusive radio access (Deauth, Evil Twin, BSSID Clone). A configurable timeout brings it back automatically — without one set, it's a power cycle to regain control.</p>
 
-    <h2 id="install">Installation</h2>
-    <div class="step"><div class="step-n">1</div><div><p><b>Grab the firmware.</b> Download the latest release, or build from source with ESP-IDF.</p></div></div>
-    <div class="step"><div class="step-n">2</div><div><p><b>Flash it.</b></p>
-      <pre>command line
-esptool.py -p (PORT) -b 460800 --before default_reset --after hard_reset 
---chip esp32 write_flash --flash_mode dio --flash_size detect 
---flash_freq 80m 0x1000 build/bootloader/bootloader.bin 
-0x8000 build/partition_table/partition-table.bin 
-0x10000 build/projecthydra-32.bin 0x190000 build/storage.bin
+    <h2 id="install"><span class="num">9</span>Build &amp; install</h2>
+    <p>Needs <a href="https://docs.espressif.com/projects/esp-idf/en/stable/esp32/get-started/index.html" target="_blank" rel="noopener">ESP-IDF</a> set up, targeting the standard ESP32 chip.</p>
+    <pre>git clone https://github.com/SameerAlSahab/Hydra-ESP.git
+cd Hydra-ESP
+idf.py set-target esp32
+idf.py build
+idf.py -p /dev/ttyUSB0 flash monitor</pre>
+    <p>Prefer flashing a release build directly instead? Grab the binaries from the <a href="https://github.com/SameerAlSahab/Hydra-ESP/releases" target="_blank" rel="noopener">Releases</a> page and flash with <code class="inline">esptool.py</code> or the Espressif flash tool at the standard offsets (bootloader → <code class="inline">0x1000</code>, partition table → <code class="inline">0x8000</code>, app → <code class="inline">0x10000</code>, SPIFFS storage → <code class="inline">0x190000</code>).</p>
+    <p>Once it's flashed: join the <code class="inline">hydra</code> network, open <code class="inline">192.168.4.1</code>, and change the default SSID/password from Settings before doing anything else.</p>
 
-or windows GUI tool
-FILE ADDRESS
-bootloader.bin 0x1000
-partition-table.bin 0x8000
-projecthydra-32.bin 0x10000
-storage.bin 0x190000</pre>
-    </div></div>
-    <div class="step"><div class="step-n">3</div><div><p><b>Connect.</b> Join the <code class="inline">hydra</code> Wi-Fi network and open <code class="inline">192.168.4.1</code> in a browser.</p></div></div>
-    <div class="step"><div class="step-n">4</div><div><p><b>Change the defaults.</b> Set a new AP SSID and password from Settings before doing anything else.</p></div></div>
+    <h2 id="citation"><span class="num">10</span>Citation</h2>
+    <p>A companion paper walks through the 802.11/BLE background behind everything on this page — the protocol-level mechanism each module exploits, and the countermeasures that actually address the root cause (802.11w, WPA3-SAE, rogue-AP detection, tighter BT pairing policy). If you're citing the firmware or the paper, use the repo's <code class="inline">CITATION.cff</code> — GitHub's "Cite this repository" button reads it automatically — or the BibTeX below.</p>
+    <pre>@article{alsahab2026hydraesp,
+  author = {Al Sahab, Sameer},
+  title  = {Low-Cost IEEE 802.11 and Bluetooth Attack Surfaces on
+            Commodity Microcontrollers: A Case Study of the ESP32 Platform},
+  year   = {2026},
+  url    = {https://github.com/SameerAlSahab/Hydra-ESP/blob/main/paper/hydra_esp_paper.pdf},
+  note   = {Firmware and paper available in this repository.}
+}</pre>
 
-    <h2 id="legal">Legal &amp; ethics</h2>
+    <h2 id="legal"><span class="num">11</span>Legal &amp; ethics</h2>
     <div class="warn">
       <b>Educational and authorized-testing use only</b>
-      Only run this against networks and devices you own, or have explicit written authorization to test. Unauthorized use is illegal under the Computer Fraud and Abuse Act (US), the Computer Misuse Act (UK), the ICT Act (Bangladesh/India), and equivalent laws in most other jurisdictions. The author accepts no liability for misuse — see the companion paper (linked below) for how each attack works and how to defend against it.
+      Only run this against networks and devices you own, or have explicit written authorization to test. Unauthorized use is illegal under the Computer Fraud and Abuse Act (US), the Computer Misuse Act (UK), the IT Act 2000 (Bangladesh/India), and equivalent laws in most other jurisdictions. The author accepts no liability for misuse — see the companion paper for how each module works and how to defend against it.
     </div>
 
-    <h2 id="credits">Credits</h2>
+    <h2 id="credits"><span class="num">12</span>Credits</h2>
     <table>
       <tr><th>Lead developer</th><td>Sameer Al Sahab</td></tr>
       <tr><th>Original codebase</th><td><a href="https://github.com/risinek/esp32-wifi-penetration-tool" target="_blank" rel="noopener">risinek/esp32-wifi-penetration-tool</a></td></tr>
@@ -259,12 +351,14 @@ storage.bin 0x190000</pre>
       <tr><th>BLE spam code</th><td>justcallmekoko and ckcr4lyf (<a href="https://github.com/ckcr4lyf/EvilAppleJuice-ESP32" target="_blank" rel="noopener">EvilAppleJuice-ESP32</a>)</td></tr>
     </table>
 
-    <h2 id="links">Links</h2>
+    <h2 id="links"><span class="num">13</span>Links</h2>
     <ul>
       <li><a href="https://github.com/SameerAlSahab/Hydra-ESP" target="_blank" rel="noopener">Source code (GitHub)</a></li>
       <li><a href="https://github.com/SameerAlSahab/Hydra-ESP/releases" target="_blank" rel="noopener">Firmware releases</a></li>
-      <li><a href="https://github.com/SameerAlSahab/Hydra-ESP/blob/main/paper" target="_blank" rel="noopener">Companion research paper — protocol background, attack analysis, defenses</a></li>
+      <li><a href="https://github.com/SameerAlSahab/Hydra-ESP/tree/main/paper" target="_blank" rel="noopener">Companion research paper — protocol background, attack analysis, defenses</a></li>
       <li><a href="https://github.com/SameerAlSahab/Hydra-ESP/blob/main/CITATION.cff" target="_blank" rel="noopener">Citation file</a></li>
+      <li><a href="https://github.com/SameerAlSahab/Hydra-ESP/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing guide</a></li>
+      <li><a href="https://github.com/SameerAlSahab/Hydra-ESP/discussions" target="_blank" rel="noopener">Discussions</a></li>
     </ul>
   </main>
 </div>
@@ -274,10 +368,12 @@ storage.bin 0x190000</pre>
 </footer>
 
 <script>
-const burger = document.getElementById('burger');
-const sidebar = document.getElementById('sidebar');
-burger.addEventListener('click', () => sidebar.classList.toggle('open'));
-document.querySelectorAll('.sidebar a').forEach(a => a.addEventListener('click', () => sidebar.classList.remove('open')));
+var burger = document.getElementById('burger');
+var sidebar = document.getElementById('sidebar');
+burger.addEventListener('click', function(){ sidebar.classList.toggle('open'); });
+document.querySelectorAll('.sidebar a').forEach(function(a){
+  a.addEventListener('click', function(){ sidebar.classList.remove('open'); });
+});
 </script>
 </body>
 </html>
