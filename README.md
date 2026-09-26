@@ -85,56 +85,81 @@ Some attacks (Deauth, Evil Twin, Super Clone) need the radio to themselves, so t
 ## Attacks
 
 ### Deauthentication
-Raw 802.11 deauth frames to boot clients off a target AP. Up to 16 targets at once. Devices with 802.11w (MFP) enabled can resist plain frame-injection deauth — see BSSID Clone below for a way around that.
+Picked from the "Deauth" button in the Attack tab. Sends raw 802.11 deauth frames to boot clients off a target AP. Up to 16 targets at once. Devices with 802.11w (MFP) enabled can resist plain frame-injection deauth — that's what BSSID Clone mode below is for.
 
-**Methods:** deauth frames only / deauth + disassociation frames
+**Modes (pick one from the Attack Method dropdown):**
+- **Normal Deauth** — plain 802.11 deauth frames, the classic method.
+- **Combined Deauth** — deauth + disassociation frames sent together, harder to ignore for some clients.
+- **Multi-Clone Deauth** — runs the attack across several cloned identities at once instead of one.
+- **BSSID Clone (Aggressive)** — clones the target's SSID *and* BSSID onto the ESP32 on the same channel, so the real AP and the clone look identical. The address clash boots clients off on its own, and it still works on 802.11w/MFP devices since it's not sending raw unprotected deauth frames at all.
+
+**Timeout:** default 2 minutes, editable 1–255 minutes. Turn the timeout checkbox off and the attack runs forever — you'll need to power cycle the ESP32 to get the management AP back.
 
 ---
 
 ### WPA Handshake Capture
 Forces reconnects with deauth frames, captures the resulting WPA2 4-way handshake, saves it as `.pcap` and `.hccapx` for offline auditing with Hashcat / aircrack-ng against a wordlist. Needs a connected client on the target network. Runs until it gets a handshake or you stop it.
 
+**Modes:** Normal Deauth / BSSID Clone (Aggressive) / Silent Capture (just listens, doesn't force a reconnect — needs a client to reconnect naturally).
+
 ---
 
 ### Clientless PMKID Capture
-Grabs the PMKID off the first EAPOL-Key frame during association — no connected client needed, the AP just has to be in range. Works with Hashcat hash mode 22000. Most modern WPA2 APs leak this, some don't include it at all.
+Grabs the PMKID off the first EAPOL-Key frame during association — no connected client needed, the AP just has to be in range. No mode to pick here, it's a single fixed method. Works with Hashcat hash mode 22000. Most modern WPA2 APs leak this, some don't include it at all.
 
 ---
 
 ### Beacon Spam
-Floods the area with fake 802.11 beacon frames, each with a randomly generated SSID. Trashes the Wi-Fi scan list on every nearby device. 1–100 fake networks, configurable.
+Floods the area with fake 802.11 beacon frames. 1–100 fake networks, configurable. Default timeout 5 minutes.
+
+**Modes:**
+- **Common Names** — everyday SSIDs like "Home WiFi", "TP-Link", etc, blends in with normal noise.
+- **Random Strings** — gibberish SSIDs, obviously fake, good for just flooding the scan list.
+- **Rick Roll Mode** — you can guess.
+- **Security Names** — SSIDs styled to look like security/surveillance gear, mostly for messing with a scan list.
 
 ---
 
 ### Ghost Mode (Probe Request Spam)
-Listens for probe requests devices send out for their saved networks, grabs the SSIDs, then starts advertising those exact names back. Devices try to connect to the ESP32 instead of their real saved network.
+Listens for probe requests devices send out for their saved networks, grabs the SSIDs, then starts advertising those exact names back. Devices try to connect to the ESP32 instead of their real saved network. No mode/method to configure — just target-less and timeout, default 5 minutes.
 
 ---
 
 ### Evil Twin
-Spins up an open clone of the target AP (same SSID, no password) while deauthing the real one to push clients off it. Clients see the open clone, connect, get hit with a captive portal asking for the network password. Runs until it gets and verifies a submission. Web UI is down for the duration — power cycle to stop if no timeout is set.
+Called "Devil Twin" in the UI. Spins up an open clone of the target AP (same SSID, no password) and starts deauthing the real one at the same time to push clients off it. Runs its own DNS server so every request from a connected client gets redirected to a captive portal ("firmware update" style page) asking for the Wi-Fi password.
+
+Whatever password gets submitted isn't just logged blind — the firmware actually tries connecting to the *real* AP with it to confirm it's correct. Wrong password → it's logged as a failed attempt and the victim gets sent back to the portal. Right password → captured, verified, and shown in the web UI. Default timeout 5 minutes, and the web UI is unreachable while it's running — power cycle to stop early if no timeout is set.
 
 ---
 
-### BSSID Clone (Twin Deauth)
-Clones the target's SSID *and* BSSID onto the ESP32 on the same channel, so the real AP and the clone look identical. The address collision kicks clients off on its own — and unlike raw deauth frames, this still works against 802.11w/MFP devices since it's not relying on unprotected management frames.
-
----
-
-### SSID Cloner
-Spins up multiple clones sharing (near-)identical SSIDs by padding the name with spaces.
+### Super Clone
+This is the "SSID Cloner" — spins up multiple APs sharing (near-)identical SSIDs by padding the real name with spaces, so a scan list shows what looks like several copies of the same network. Only one method: "Open Multiple Clones". Default timeout 5 minutes.
 
 ---
 
 ### BLE Spam
-Broadcasts BLE advertisement packets mimicking Apple/Samsung/Google proximity pairing signals — iPhones, iPads, Android devices pop up pairing prompts for nearby "devices". Target type is selectable, MAC rotation supported.
+Broadcasts BLE advertisement packets mimicking Apple/Samsung/Google proximity pairing signals — iPhones, iPads, Android devices pop up pairing prompts for nearby "devices". Default timeout 15 minutes, MAC address rotates on every run.
 
-Supports: AirPods (all gens), AirPods Pro (all gens), AirPods Max, Beats, Apple TV setup/pairing, HomePod setup, Vision Pro, Galaxy Buds (all variants), Pixel Buds, or random.
+**25 selectable modes**, grouped as:
+- **Apple Audio (8 modes)** — AirPods/AirPods Pro/AirPods Max/Beats style pairing popups.
+- **Apple Setup (5 modes)** — Apple TV, HomePod, Vision Pro style setup prompts.
+- **Samsung (6 modes)** — Galaxy Buds variants 1–5, plus a Samsung Random mode.
+- **Google (5 modes)** — Fast Pair variants 1–4, plus a Google Random mode.
+- **Mixed Random (1 mode)** — picks randomly across all of the above.
 
 ---
 
 ### BT Payload
-Advertises the ESP32 as a BT HID keyboard (`Hydra-<random>`). Once a Windows box pairs with it, the firmware fires off keystrokes to run the payload.
+Advertises the ESP32 as a Bluetooth HID keyboard under a random name (`HydraBT-XXXX`) with a randomised MAC, generated fresh every run. Once something pairs with it, it types out one of a few payloads. Mostly aimed at Windows — pair from Android with an app like nRF Connect.
+
+**Built-in payloads (pick from the Attack tab once connected):**
+- **Write to Notepad** — opens Notepad, types a short message. The "hello world" of this feature.
+- **Play Rick Roll (YouTube)** — opens the default browser to a YouTube link.
+- **Set Warning Wallpaper** — downloads an image and sets it as desktop wallpaper. May need a restart to fully apply, and the target needs to be online to pull the image.
+- **Grab Wi-Fi Passwords** — reads saved Wi-Fi profiles off the machine and sends them back over HTTP to the ESP32's own log endpoint (or a custom remote URL / RequestBin if you set one in the UI).
+- **Hydra God Mode** — runs the bundled prank script (wallpaper swap + sound).
+
+All five payloads live in [`bt_payload_attack.cpp`](https://github.com/SameerAlSahab/Hydra-ESP/blob/main/main/bt/bt_payload_attack.cpp) as small keystroke-injection functions (`do_notepad_sequence`, `do_payload_2` .. `do_payload_5`), wired into a switch statement in `execute_current_payload()`. Adding your own payload is basically: write a new `do_payload_N` function that presses/releases keys through `s_keyboard`, add a `case N:` for it in that switch, and add a button for it in the web UI (`data/index.html` + `data/app.js`, same pattern as the existing five). Standalone scripts the payloads fetch and run (like the two `.ps1` files already there) live in [`/payloads`](https://github.com/SameerAlSahab/Hydra-ESP/tree/main/payloads) in the repo root — that's the place to drop new `.ps1` scripts or other files a payload needs to pull down. PRs adding new payloads or payload files are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
