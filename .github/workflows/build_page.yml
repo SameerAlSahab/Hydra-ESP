@@ -27,10 +27,13 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Disable Jekyll
+        run: touch pages/.nojekyll
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './'
+          path: 'pages/'
 
       - name: Deploy to GitHub Pages
         id: deployment
