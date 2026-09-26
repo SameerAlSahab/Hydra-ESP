@@ -1,17 +1,16 @@
-<table>
-<tr>
-<td width="160" align="center">
-<img src="resources/hydra_logo.png" alt="Hydra-ESP logo" width="140"/>
-</td>
-<td>
-
-# Hydra-ESP
-**wifi + bt test tool for the ESP32**
-
-Built on top of [risinek's](https://github.com/risinek/esp32-wifi-penetration-tool) esp32-wifi-penetration-tool. Redesigned web UI, multi-target deauth, BLE attacks, a deauth detector, optional OLED, and a bunch of extra modules on top of the original.
-
-</td>
-</tr>
+<table border="0" style="border: none; border-collapse: collapse;">
+  <tr style="border: none;">
+    <td width="200" align="center" valign="middle" style="border: none;">
+      <img src="resources/hydra_logo.png" alt="Hydra-ESP logo" width="180"/>
+    </td>
+    <td valign="middle" style="border: none;">
+      <div style="font-size: 2em; font-weight: bold; margin-bottom: 4px;">Hydra-ESP</div>
+      <div style="font-weight: bold; margin-bottom: 12px;">wifi + bt test tool for the ESP32</div>
+      <p style="margin: 0; line-height: 1.5;">
+        Built on top of <a href="https://github.com/risinek/esp32-wifi-penetration-tool">risinek's</a> esp32-wifi-penetration-tool. Redesigned web UI, multi-target deauth, BLE attacks, a deauth detector, optional OLED, and a bunch of extra modules on top of the original.
+      </p>
+    </td>
+  </tr>
 </table>
 
 <p>
@@ -44,7 +43,7 @@ Built on top of [risinek's](https://github.com/risinek/esp32-wifi-penetration-to
 <img src="https://img.youtube.com/vi/6GDkQS9YzEI/hqdefault.jpg" width="100%" alt="Hydra-ESP v2 demo"/>
 </a>
 <br/>
-<b>v2 (new, current build)</b> — 13K+ views
+<b>v1.1.3 (new, current build)</b> — 13K+ views
 </td>
 </tr>
 </table>
@@ -93,7 +92,7 @@ Picked from the "Deauth" button in the Attack tab. Sends raw 802.11 deauth frame
 - **Multi-Clone Deauth** — runs the attack across several cloned identities at once instead of one.
 - **BSSID Clone (Aggressive)** — clones the target's SSID *and* BSSID onto the ESP32 on the same channel, so the real AP and the clone look identical. The address clash boots clients off on its own, and it still works on 802.11w/MFP devices since it's not sending raw unprotected deauth frames at all.
 
-**Timeout:** default 2 minutes, editable 1–255 minutes. Turn the timeout checkbox off and the attack runs forever — you'll need to power cycle the ESP32 to get the management AP back.
+**Timeout:** default 2 minutes,but turn the timeout checkbox off and the attack runs forever — you'll need to power cycle the ESP32 to get the management AP back.
 
 ---
 
