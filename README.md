@@ -154,6 +154,13 @@ idf.py -p /dev/ttyUSB0 flash monitor
 
 The web UI assets in `data/` go to SPIFFS separately. Check `partitions.csv` and use your IDF version's SPIFFS flashing step.
 
+## I forgot new WiFi name and Password
+
+If you forgot newly added name and password after changing it, you need to clear the nvs memory to delete it
+
+<code>idf.py erase-flash</code>
+
+
 ### Dependencies
 
 | Library | License |
