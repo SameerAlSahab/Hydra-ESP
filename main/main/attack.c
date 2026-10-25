@@ -18,6 +18,7 @@
 #include "esp_err.h"
 #include "esp_event.h"
 #include "esp_timer.h"
+#include "driver/gpio.h"
 
 #include "webserver.h"
 #include "wifi_controller.h"
@@ -37,9 +38,31 @@
 #include "attack_bt_spam.h"
 #include "hydra_ssd1306_display.h"
 
+#define ATTACK_STATUS_LED_GPIO 2 
+
 static const char* TAG = "attack";
 static attack_status_t attack_status = { .state = READY, .type = -1, .content_size = 0, .content = NULL };
 static esp_timer_handle_t attack_timeout_handle;
+static bool led_initialized = false;
+
+static void attack_led_init(void) {
+    if (!led_initialized) {
+        gpio_config_t io_conf = {
+            .pin_bit_mask = (1ULL << ATTACK_STATUS_LED_GPIO),
+            .mode = GPIO_MODE_OUTPUT,
+            .pull_up_en = GPIO_PULLUP_DISABLE,
+            .pull_down_en = GPIO_PULLDOWN_DISABLE,
+            .intr_type = GPIO_INTR_DISABLE
+        };
+        gpio_config(&io_conf);
+        led_initialized = true;
+    }
+}
+
+static void attack_set_led(bool state) {
+    attack_led_init();
+    gpio_set_level(ATTACK_STATUS_LED_GPIO, state ? 1 : 0);
+}
 
 const attack_status_t *attack_get_status() {
     return &attack_status;
@@ -52,6 +75,7 @@ void attack_update_status(attack_state_t state) {
             esp_timer_stop(attack_timeout_handle);
         }
         hydra_display_set_attack_timeout(0);
+        attack_set_led(false);
     }
 }
 
@@ -74,6 +98,7 @@ char *attack_alloc_result_content(unsigned size) {
 static void attack_timeout(void* arg){
     ESP_LOGD(TAG, "Attack timed out");
     attack_update_status(TIMEOUT);
+    attack_set_led(false);
 
     switch(attack_status.type) {
         case ATTACK_TYPE_PMKID:
@@ -144,6 +169,7 @@ static void attack_request_handler(void *args, esp_event_base_t event_base, int3
 
     attack_status.state = RUNNING;
     attack_status.type  = attack_config.type;
+    attack_set_led(true);
 
     if ((attack_config.timeout > 0) && (attack_config.type != ATTACK_TYPE_BT_SPAM) && (attack_config.type != ATTACK_TYPE_EVIL_TWIN)) {
         ESP_ERROR_CHECK(esp_timer_start_once(attack_timeout_handle, (uint64_t)attack_config.timeout * 1000000));
@@ -163,7 +189,7 @@ static void attack_request_handler(void *args, esp_event_base_t event_base, int3
             attack_dos_start(&attack_config);
             break;
         case ATTACK_TYPE_BEACON_SPAM: {
-            uint8_t spam_count = attack_config.method;                              // byte 1 = count
+            uint8_t spam_count = attack_config.method;                    // byte 1 = count
             beacon_spam_mode_t mode = (beacon_spam_mode_t)attack_request->ap_count; // byte 4 = mode (repurposed)
             attack_beacon_spam_start(spam_count, mode);
             break;
@@ -212,6 +238,7 @@ static void attack_request_handler(void *args, esp_event_base_t event_base, int3
                 attack_method_super_clone(attack_config.ap_records[0]);
             } else {
                 attack_update_status(FINISHED);
+                attack_set_led(false);
             }
             break;
         case ATTACK_TYPE_BT_PAYLOAD:
@@ -220,6 +247,7 @@ static void attack_request_handler(void *args, esp_event_base_t event_base, int3
             break;
         default:
             ESP_LOGE(TAG, "Unknown attack type request.");
+            attack_set_led(false);
     }
 }
 
@@ -233,6 +261,7 @@ static void attack_reset_handler(void *args, esp_event_base_t event_base, int32_
     attack_status.type = -1;
     attack_status.state = READY;
     hydra_display_set_attack_timeout(0);
+    attack_set_led(false);
 }
 
 void attack_init(){
