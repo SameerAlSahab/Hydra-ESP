@@ -40,7 +40,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # full history, needed later for changelog/versioning
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Build firmware
         uses: espressif/esp-idf-ci-action@v1
@@ -92,19 +93,28 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       new_version: ${{ steps.version.outputs.new_version }}
+      new_name: ${{ steps.version.outputs.new_name }}
       changelog: ${{ steps.changelog.outputs.changelog }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          fetch-tags: true
 
       - name: Determine next version
         id: version
         run: |
+          set -e
+          git fetch --tags --force
+
           LATEST_TAG=$(git tag --sort=-creatordate | head -n1)
           if [ -z "$LATEST_TAG" ]; then
             LATEST_TAG="v1.1.3"
+          fi
+
+          if ! git rev-parse "$LATEST_TAG" >/dev/null 2>&1; then
+            echo "::warning::Tag $LATEST_TAG not found after fetch — changelog may include full history"
           fi
 
           VER=$(echo "$LATEST_TAG" | sed -E 's/^[vV]//')
@@ -116,16 +126,27 @@ jobs:
 
           INPUT_VERSION="${{ github.event.inputs.version }}"
           if [ -n "$INPUT_VERSION" ]; then
-            case "$INPUT_VERSION" in
-              v*|V*) NEW_VERSION="$INPUT_VERSION" ;;
-              *) NEW_VERSION="v$INPUT_VERSION" ;;
+            # Extract a clean x.y.z (optionally v-prefixed) for the TAG.
+            # Anything else in the input (e.g. " (Hotfix)") is kept only
+            # in the release NAME, never in the tag.
+            CLEAN_VERSION=$(echo "$INPUT_VERSION" | grep -oE '[vV]?[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
+            if [ -z "$CLEAN_VERSION" ]; then
+              echo "::error::Could not extract a valid x.y.z version from input '$INPUT_VERSION'"
+              exit 1
+            fi
+            case "$CLEAN_VERSION" in
+              v*|V*) NEW_TAG="$CLEAN_VERSION" ;;
+              *) NEW_TAG="v$CLEAN_VERSION" ;;
             esac
+            NEW_NAME="$INPUT_VERSION"
           else
-            NEW_VERSION="$AUTO_VERSION"
+            NEW_TAG="$AUTO_VERSION"
+            NEW_NAME="$AUTO_VERSION"
           fi
 
           echo "latest_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
-          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "new_version=$NEW_TAG" >> "$GITHUB_OUTPUT"
+          echo "new_name=$NEW_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Build changelog since last tag
         id: changelog
@@ -182,11 +203,12 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.prepare-release.outputs.new_version }}
-          name: ${{ needs.prepare-release.outputs.new_version }}
+          name: ${{ needs.prepare-release.outputs.new_name }}
           body: ${{ needs.prepare-release.outputs.changelog }}
           files: hydra-esp-${{ needs.prepare-release.outputs.new_version }}-flash-files.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   deploy-pages:
     needs: build
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.update_pages == 'true'
