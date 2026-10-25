@@ -2,30 +2,44 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>HydraESP</title>
+  <meta name="theme-color" content="#05070a">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
+<base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
+<canvas id="bg-fx" aria-hidden="true"></canvas>
+<div class="scanlines" aria-hidden="true"></div>
 
+<!-- boot splash -->
+<div id="boot-splash" role="status">
+  <pre id="boot-log"></pre>
+  <span class="boot-skip">[ tap anywhere to skip ]</span>
+</div>
+
+<!-- disclaimer -->
 <div id="disclaimer-overlay">
   <div class="disclaimer-page">
 
     <div class="disclaimer-header">
       <img src="/icons/skull.png" class="disclaimer-header-icon" alt="">
       <div>
-        <span class="disclaimer-logo-name">Hydra-ESP</span>
-        <span class="disclaimer-logo-ver">v1.1.3 — Authorised Use Only</span>
+        <span class="disclaimer-logo-name">HYDRA-ESP</span>
+        <span class="disclaimer-logo-ver">v1.1.3 — AUTHORISED USE ONLY</span>
       </div>
     </div>
 
     <div class="disclaimer-content">
-    <img src="/icons/warning.png" class="disclaimer-warn-tag" alt="">
-      <div class="disclaimer-warn-tag">Legal Notice &amp; Disclaimer</div>
+      <div class="disclaimer-warn-tag">
+        <img src="/icons/warning.png" class="disclaimer-warn-icon" alt="">
+        Legal Notice &amp; Disclaimer
+      </div>
 
       <h1 class="disclaimer-title">Authorised Use Only</h1>
       <p class="disclaimer-intro">
@@ -89,6 +103,7 @@
 </div>
 
 
+<!-- dialog -->
 <div id="dialog-overlay" class="hidden">
   <div class="dialog-box">
     <p id="dialog-msg"></p>
@@ -97,21 +112,27 @@
 </div>
 
 
+<!-- app bar -->
 <header class="app-bar">
   <div class="app-bar-inner">
     <div class="brand">
       <img src="/icons/logo.png" class="brand-icon" alt="">
       <div>
-        <span class="brand-name">Hydra-ESP</span>
+        <span class="brand-name">HYDRA-ESP</span>
+        <span class="brand-sub">ESP32 PENETRATION SUITE</span>
       </div>
     </div>
-    <button class="icon-btn theme-toggle" onclick="toggleTheme()" aria-label="Toggle light / dark mode">
-      <img src="/icons/light_mode.png" class="icon-img" alt="Theme toggle">
-    </button>
+    <div class="bar-right">
+      <span id="link-status" class="link-status online"><i></i><span id="link-status-text">LINK OK</span></span>
+      <button class="icon-btn theme-toggle" onclick="toggleTheme()" aria-label="Toggle light / dark mode">
+        <img src="/icons/light_mode.png" class="icon-img" alt="Theme toggle">
+      </button>
+    </div>
   </div>
 </header>
 
 
+<!-- nav -->
 <nav class="bottom-nav">
   <button class="nav-item active" data-tab="scan" onclick="switchTab('scan')">
     <div class="nav-indicator">
@@ -143,7 +164,7 @@
 <main class="content">
   <div id="errors" class="error-banner"></div>
 
-    <!-- Scan -->
+  <!-- Scan -->
   <section id="tab-scan" class="tab-panel active">
 
     <div class="info-box info-warn">
@@ -155,7 +176,7 @@
       Unauthorised use is a criminal offence in most jurisdictions.
     </div>
 
-    <div class="card">
+    <div class="card card-accent">
       <div class="card-header">
         <h3>Nearby Wi-Fi Networks</h3>
         <span id="selected-count-badge" class="badge">0 selected</span>
@@ -171,7 +192,7 @@
               </tr>
             </thead>
             <tbody id="ap-list">
-              <tr><td colspan="3" class="table-empty-msg">Scanning…</td></tr>
+              <tr><td colspan="4" class="table-empty-msg">Scanning…</td></tr>
             </tbody>
           </table>
         </div>
@@ -185,39 +206,39 @@
     </div>
 
 
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:0 4px;">
+    <div class="attack-info-grid">
 
-      <div class="info-box" style="margin:0; border-radius:var(--radius-lg);">
+      <div class="info-box">
         <div class="info-label">Twin Deauth</div>
         Clones the target BSSID on the same channel. Bypasses MFP on modern devices.
       </div>
 
-      <div class="info-box" style="margin:0; border-radius:var(--radius-lg);">
+      <div class="info-box">
         <div class="info-label">Packet Deauth</div>
         Sends raw 802.11 deauth frames. Supports multi-target. Devices with 802.11w may resist.
       </div>
 
-      <div class="info-box" style="margin:0; border-radius:var(--radius-lg);">
+      <div class="info-box">
         <div class="info-label">Handshake</div>
         Captures WPA/WPA2 4-way handshake. Outputs <code>.pcap</code> &amp; <code>.hccapx</code>.
       </div>
 
-      <div class="info-box" style="margin:0; border-radius:var(--radius-lg);">
+      <div class="info-box">
         <div class="info-label">PMKID</div>
         Clientless — captures from first EAPOL-Key frame. Works on most WPA2 APs.
       </div>
 
-      <div class="info-box" style="margin:0; border-radius:var(--radius-lg);">
+      <div class="info-box">
         <div class="info-label">Beacon Spam</div>
         Floods airspace with fake beacons, polluting Wi-Fi scan lists on all nearby devices.
       </div>
 
-      <div class="info-box" style="margin:0; border-radius:var(--radius-lg);">
+      <div class="info-box">
         <div class="info-label">Evil Twin</div>
         Clones target AP and execute deauth. Fake Captive portal harvests the network password.
       </div>
 
-      <div class="info-box" style="margin:0; grid-column:1/-1; border-radius:var(--radius-lg);">
+      <div class="info-box" style="grid-column:1/-1;">
         <div class="info-label">Ghost Mode (Probe Spam)</div>
         Exploits persistent device probing for saved networks. Clones those SSIDs so devices
         attempt to associate with the ESP32 instead of the original AP.
@@ -227,13 +248,13 @@
 
   </section>
 
+  <!-- Attack -->
   <section id="tab-attack" class="tab-panel">
 
 
     <div id="running-section" style="display:none;">
-      <div class="card">
-        <div class="running-card">
-
+      <div class="card running-card">
+        <div class="running-inner">
 
           <div id="beacon-timer-wrap" style="display:none;">
             <div class="circular-timer-container">
@@ -259,6 +280,25 @@
 
           <div class="running-label">Attack In Progress</div>
           <div class="running-attack-info" id="running-attack-info"></div>
+
+          <!-- radio takeover warning (single-radio ESP32) -->
+          <div id="radio-warn" class="radio-warn" style="display:none;">
+            <div class="radio-warn-title">
+              <img src="/icons/warning.png" class="radio-warn-icon" alt="">
+              ESP32 HAS ONE RADIO — IT IS BUSY NOW
+            </div>
+            <p>This attack seizes the only radio, so <strong>this control panel will go offline</strong>.
+               That is normal — do not refresh the page.</p>
+            <p>To stop the attack manually: <strong>turn off the ESP32 power</strong>, wait 3 seconds, power back on.</p>
+          </div>
+
+          <div id="autostop-note" class="autostop-note" style="display:none;"></div>
+
+          <div id="link-lost-bar" class="link-lost-bar" style="display:none;">
+            <span class="pulse-dot"></span>
+            LINK LOST — attack is still running on the ESP32. Reconnecting…
+          </div>
+
           <div id="no-timeout-hint" class="no-timeout-hint" style="display:none;">
             No timeout set — power cycle the ESP32 to stop the attack.
           </div>
@@ -266,20 +306,21 @@
       </div>
     </div>
 
-      <!-- BT Payload options -->
+    <!-- BT Payload options -->
     <div id="bt-payload-controls" style="display:none; margin-top:12px; text-align:center;">
       <div class="card">
+        <div class="card-header"><h3>BT Payload Console</h3></div>
         <div class="card-body">
           <div id="bt-status-container">
             <span id="bt-connection-info">Checking Bluetooth status…</span>
           </div>
 
-          <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:14px;">
-            <button onclick="setBtPayloadAndRun(1)" class="bt-payload-btn">Write to Notepad</button>
-            <button onclick="setBtPayloadAndRun(2)" class="bt-payload-btn">Play Rick Roll (YouTube)</button>
-            <button onclick="setBtPayloadAndRun(3)" class="bt-payload-btn">Set Warning Wallpaper *</button>
-            <button onclick="setBtPayloadAndRun(4)" class="bt-payload-btn">Grab Wi-Fi Passwords **</button>
-            <button onclick="setBtPayloadAndRun(5)" class="bt-payload-btn">Hydra God Mode</button>
+          <div class="bt-payload-grid">
+            <button onclick="setBtPayloadAndRun(1)" class="bt-payload-btn">⌨ Write to Notepad</button>
+            <button onclick="setBtPayloadAndRun(2)" class="bt-payload-btn">▶ Play Rick Roll (YouTube)</button>
+            <button onclick="setBtPayloadAndRun(3)" class="bt-payload-btn">🖼 Set Warning Wallpaper *</button>
+            <button onclick="setBtPayloadAndRun(4)" class="bt-payload-btn">📡 Grab Wi-Fi Passwords **</button>
+            <button onclick="setBtPayloadAndRun(5)" class="bt-payload-btn">☠ Hydra God Mode</button>
           </div>
 
           <div class="info-box info-warn" style="text-align:left; margin:0 0 12px;">
@@ -289,17 +330,13 @@
             Most payloads target Windows. Use nRF Connect app for Android pairing.
           </div>
 
-          <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--md-outline-var);">
-            <label style="display:flex; align-items:center; gap:10px; margin-bottom:10px; cursor:pointer;">
-              <input type="checkbox" id="use-custom-url" onchange="toggleCustomUrl()"
-                     style="width:18px; height:18px; accent-color:var(--md-primary);">
-              <span style="font-size:0.85rem; color:var(--md-on-surface);">
-                Send to remote server (RequestBin, etc.)
-              </span>
+          <div class="custom-url-zone">
+            <label class="custom-url-toggle">
+              <input type="checkbox" id="use-custom-url" onchange="toggleCustomUrl()">
+              <span>Send to remote server (RequestBin, etc.)</span>
             </label>
             <div id="custom-url-row" style="display:none;">
-              <input type="text" id="custom-url" placeholder="https://your.requestbin.com/…"
-                     style="margin-bottom:8px;">
+              <input type="text" id="custom-url" placeholder="https://your.requestbin.com/…">
               <button class="btn-secondary" onclick="saveCustomUrl()">Save URL</button>
             </div>
           </div>
@@ -307,7 +344,7 @@
           <div style="margin-top:14px;">
             <button onclick="runBtPayloadAgain()" class="btn-tonal">↺ Run Again</button>
           </div>
-          <p style="font-size:0.72rem; color:var(--md-on-surface-var); margin-top:10px;">
+          <p class="bt-payload-foot">
             Selecting a payload executes it immediately on the connected device and sets it for
             future reconnects.
           </p>
@@ -317,11 +354,10 @@
 
     <!-- Result card -->
     <div id="result-section" style="display:none;">
-      <div class="card">
+      <div class="card card-accent">
         <div class="card-header">
           <h3>Attack Result</h3>
-          <img src="/icons/check.png"
-               style="width:20px; height:20px; filter:var(--icon-filter-active);" alt="">
+          <img src="/icons/check.png" class="card-head-icon" alt="">
         </div>
         <div class="card-body">
           <span id="result-status" class="result-status"></span>
@@ -401,10 +437,9 @@
             </p>
           </div>
 
-          <div style="margin-top:24px;">
+          <div class="launch-zone">
             <button type="button" onclick="runAttack()" class="btn-primary full-width">
-              <img src="/icons/rocket.png"
-                   style="width:18px; height:18px; filter:brightness(10);" alt="">
+              <img src="/icons/rocket.png" class="btn-launch-icon" alt="">
               Launch Attack
             </button>
           </div>
@@ -438,14 +473,13 @@
         </div>
         <div class="form-row" style="margin-top:16px;">
           <label class="form-label" for="ap-pass">
-            New Password <span style="font-weight:400; text-transform:none; font-family:'Space Grotesk',sans-serif; letter-spacing:0;">(min 8 chars)</span>
+            New Password <span class="form-label-note">(min 8 chars)</span>
           </label>
           <input type="password" id="ap-pass" placeholder="Enter new password" autocomplete="new-password">
         </div>
-        <div style="margin-top:24px;">
+        <div class="launch-zone">
           <button onclick="saveSettings()" class="btn-primary full-width">
-            <img src="/icons/restart.png"
-                 style="width:18px; height:18px; filter:brightness(10);" alt="">
+            <img src="/icons/restart.png" class="btn-launch-icon" alt="">
             Save &amp; Restart
           </button>
         </div>
@@ -470,8 +504,7 @@
     <div class="card">
       <div class="card-header">
         <h3>Authors &amp; Credits</h3>
-        <img src="/icons/contribution.png"
-             style="width:20px; height:20px; filter:var(--icon-filter-active);" alt="">
+        <img src="/icons/contribution.png" class="card-head-icon" alt="">
       </div>
       <div class="card-body" style="padding:0;">
         <div class="credit-row">
@@ -487,13 +520,13 @@
           <div class="credit-desc">Initial ESP32 Wi-Fi penetration tool implementation — the
             foundation this firmware is built upon.</div>
         </div>
-        <div class="credit-row" style="border-bottom:none;">
+        <div class="credit-row">
           <div class="credit-role">Inspiration</div>
           <div class="credit-name">spacehuhn</div>
           <div class="credit-desc">Inspired by deauth attack and Wi-Fi testing concepts from
             the ESP8266 Deauther project.</div>
         </div>
-          <div class="credit-row" style="border-bottom:none;">
+        <div class="credit-row">
           <div class="credit-role">Ideas and some codes</div>
           <div class="credit-name">justcallmekoko and ckcr4lyf</div>
           <div class="credit-desc">Inspired by the bluetooth spam attack from
@@ -505,8 +538,7 @@
     <div class="card">
       <div class="card-header">
         <h3>Firmware Info</h3>
-        <img src="/icons/ip.png"
-             style="width:20px; height:20px; filter:var(--icon-filter-active);" alt="">
+        <img src="/icons/ip.png" class="card-head-icon" alt="">
       </div>
       <div class="card-body" style="padding:0;">
         <table class="info-table">

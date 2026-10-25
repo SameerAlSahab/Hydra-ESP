@@ -1,4 +1,3 @@
-
 var AttackStateEnum = { READY: 0, RUNNING: 1, FINISHED: 2, TIMEOUT: 3 };
 var AttackTypeEnum  = {
     ATTACK_TYPE_PASSIVE:     0,
@@ -23,6 +22,13 @@ var currentAttackType     = -1;
 var defaultAttackMethodsHTML = "";
 var btStatusTimer         = null;
 
+
+var ATTACK_START_TS       = 0;
+var ATTACK_TIMEOUT_SEC    = 0;
+var linkRetryTimer        = null;
+var linkWatchdogTimer     = null;
+var linkWasLost           = false;
+
 var DISCONNECTS_MGMT_AP = [
     AttackTypeEnum.ATTACK_TYPE_DOS,
 AttackTypeEnum.ATTACK_TYPE_EVIL_TWIN,
@@ -40,23 +46,48 @@ AttackTypeEnum.ATTACK_TYPE_BT_PAYLOAD
 window.onload = function () {
     defaultAttackMethodsHTML = document.getElementById("attack_method").outerHTML;
 
-    var savedTheme = localStorage.getItem("hydra_theme") || "dark";
+    /* Never let a localStorage SecurityError kill the whole boot sequence —
+     * that was why the Continue button stayed greyed out on some webviews. */
+    var savedTheme = "dark";
+    try { savedTheme = localStorage.getItem("hydra_theme") || "dark"; } catch (e) {}
     document.documentElement.setAttribute("data-theme", savedTheme);
 
     attachRippleToAll();
 
-    if (localStorage.getItem("hydra_disclaimer_v1") === "accepted") {
-        document.getElementById("disclaimer-overlay").style.display = "none";
-        init();
-    } else {
-        document.getElementById("disclaimer-check").addEventListener("change", function () {
-            document.getElementById("disclaimer-btn").disabled = !this.checked;
-        });
+    var accepted = false;
+    try { accepted = localStorage.getItem("hydra_disclaimer_v1") === "accepted"; } catch (e) {}
+
+    /* Wire the checkbox/button FIRST, independent of storage state.
+     * 'click' is a fallback because some embedded webviews never fire 'change'. */
+    var disclaimerCheck = document.getElementById("disclaimer-check");
+    var disclaimerBtn   = document.getElementById("disclaimer-btn");
+    function syncDisclaimerBtn() {
+        if (disclaimerBtn && disclaimerCheck) disclaimerBtn.disabled = !disclaimerCheck.checked;
     }
+    if (disclaimerCheck) {
+        disclaimerCheck.addEventListener("change", syncDisclaimerBtn);
+        disclaimerCheck.addEventListener("click",  syncDisclaimerBtn);
+    }
+    /* Safety net: if the button somehow starts disabled with a checked box, fix it */
+    syncDisclaimerBtn();
+
+    if (accepted) {
+        dismissBootInstant();
+        init();
+    }
+
+    startBackgroundFx();
+    document.addEventListener("visibilitychange", onVisibilityChange);
 };
 
+/* boot splash (cosmetic) */
+function dismissBootInstant() {
+    var b = document.getElementById("boot-splash");
+    if (b) b.remove();
+}
+
 function dismissDisclaimer() {
-    localStorage.setItem("hydra_disclaimer_v1", "accepted");
+    try { localStorage.setItem("hydra_disclaimer_v1", "accepted"); } catch (e) {}
     document.getElementById("disclaimer-overlay").style.display = "none";
     init();
 }
@@ -72,7 +103,7 @@ function toggleTheme() {
     var html  = document.documentElement;
     var theme = html.getAttribute("data-theme") === "dark" ? "light" : "dark";
     html.setAttribute("data-theme", theme);
-    localStorage.setItem("hydra_theme", theme);
+    try { localStorage.setItem("hydra_theme", theme); } catch (e) {}
 }
 
 /* ── Ripple effect ───────────────────────────────── */
@@ -106,6 +137,61 @@ function switchTab(name) {
     });
 }
 
+/* ── Link status pill / watchdog ─────────────────── */
+function setLinkStatus(state, text) {
+    var pill = document.getElementById("link-status");
+    var txt  = document.getElementById("link-status-text");
+    if (!pill) return;
+    pill.className = "link-status " + state;
+    if (txt) txt.textContent = text;
+}
+
+function showLinkLost() {
+    linkWasLost = true;
+    setLinkStatus("lost", "LINK LOST");
+    var bar = document.getElementById("link-lost-bar");
+    if (bar) bar.style.display = "block";
+    /* keep polling silently in the background — page stays alive */
+    scheduleLinkRetry();
+}
+
+function hideLinkLost() {
+    if (!linkWasLost) return;
+    linkWasLost = false;
+    setLinkStatus("online", "LINK OK");
+    var bar = document.getElementById("link-lost-bar");
+    if (bar) bar.style.display = "none";
+}
+
+function scheduleLinkRetry() {
+    if (linkRetryTimer) return;
+    linkRetryTimer = setTimeout(function () {
+        linkRetryTimer = null;
+        getStatus();
+    }, 3000);
+}
+
+function startLinkWatchdog() {
+    stopLinkWatchdog();
+    linkWatchdogTimer = setInterval(function () {
+        getStatus();
+    }, 5000);
+}
+
+function stopLinkWatchdog() {
+    if (linkWatchdogTimer) { clearInterval(linkWatchdogTimer); linkWatchdogTimer = null; }
+}
+
+/* Resume cleanly when the user returns to the tab */
+function onVisibilityChange() {
+    if (document.hidden) return;
+    var running = document.getElementById("running-section");
+    if (running && running.style.display !== "none") {
+        refreshTimerFromClock();
+        getStatus();
+    }
+}
+
 /* ── AP Scanning ─────────────────────────────────── */
 function refreshAps() {
     selectedApElements = [];
@@ -114,7 +200,7 @@ function refreshAps() {
     updateSelectedCountBadge();
 
     var tbody = document.getElementById("ap-list");
-    tbody.innerHTML = '<tr><td colspan="4" class="table-empty-msg">Scanning… this may take a few seconds</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3" class="table-empty-msg">Scanning… this may take a few seconds</td></tr>';
 
     var oReq = new XMLHttpRequest();
     oReq.responseType = "arraybuffer";
@@ -124,13 +210,13 @@ function refreshAps() {
         tbody.innerHTML = "";
         var buf = oReq.response;
         if (!buf || buf.byteLength === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="table-empty-msg err">No access points found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" class="table-empty-msg err">No access points found.</td></tr>';
             return;
         }
         var byteArray = new Uint8Array(buf);
         var count = Math.floor(byteArray.byteLength / 40);
         if (count === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="table-empty-msg err">No access points found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" class="table-empty-msg err">No access points found.</td></tr>';
             return;
         }
         for (var i = 0; i < count; i++) {
@@ -147,20 +233,28 @@ function refreshAps() {
             apSsidMap[i] = ssid || ("AP #" + i);
 
             var rssiClass = rssi >= -60 ? "sig-strong" : rssi >= -75 ? "sig-ok" : "sig-weak";
+            var bars = rssi >= -55 ? 4 : rssi >= -65 ? 3 : rssi >= -75 ? 2 : 1;
+            var barHtml = "";
+            for (var b = 1; b <= 4; b++) {
+                barHtml += '<i class="sig-bar' + (b <= bars ? " on" : "") + '"></i>';
+            }
             var tr = document.createElement("tr");
             tr.id  = String(i);
             tr.setAttribute("onclick", "selectAp(this)");
             tr.innerHTML =
             '<td class="td-ssid">' + escapeHtml(apSsidMap[i]) + '</td>' +
             '<td class="td-bssid"><code>' + bssid + '</code></td>' +
-            '<td class="td-ch">' + (ch || '?') + '</td>' +
-            '<td class="td-rssi"><span class="' + rssiClass + '">' + rssi + ' dBm</span></td>';
+            '<td class="td-rssi"><span class="sig-bars">' + barHtml + '</span><span class="' + rssiClass + '">' + rssi + ' dBm</span></td>';
             tbody.appendChild(tr);
         }
     };
 
-    oReq.onerror   = function () { tbody.innerHTML = '<tr><td colspan="4" class="table-empty-msg err">Scan failed. Check connection to ESP32.</td></tr>'; };
-    oReq.ontimeout = function () { tbody.innerHTML = '<tr><td colspan="4" class="table-empty-msg err">Scan timed out.</td></tr>'; };
+    oReq.onerror   = function () {
+        tbody.innerHTML = '<tr><td colspan="3" class="table-empty-msg err">Scan failed. Check connection to ESP32.</td></tr>';
+    };
+    oReq.ontimeout = function () {
+        tbody.innerHTML = '<tr><td colspan="3" class="table-empty-msg err">Scan timed out.</td></tr>';
+    };
 
     oReq.open("GET", "http://192.168.4.1/ap-list", true);
     oReq.send();
@@ -293,12 +387,8 @@ function updateConfigurableFields(el) {
             setAttackMethods(["BSSID Clone (Aggressive)", "Normal Deauth", "Combined Deauth", "Multi-Clone Deauth"]);
         break;
 
-        /* ── FIX #2: methodRow was previously hidden here, making mode never selectable.
-         *                     Now we SHOW methodRow for beacon spam so the user can pick a mode,
-         *                     then beaconCfg shows the count field below it. ── */
         case AttackTypeEnum.ATTACK_TYPE_BEACON_SPAM:
             document.getElementById("attack_timeout").value = 5;
-            /* methodRow stays visible (default block) — mode dropdown shows here */
             setAttackMethods(["Common Names", "Random Strings", "Rick Roll Mode", "Security Names"]);
             beaconCfg.style.display = "block";
             break;
@@ -311,51 +401,17 @@ function updateConfigurableFields(el) {
             if (methodRow) methodRow.style.display = "none";
             break;
         case AttackTypeEnum.ATTACK_TYPE_BT_SPAM:
-
             document.getElementById("attack_timeout").value = 15;
-
-            if (methodRow)
-                methodRow.style.display = "block";
-
-        setAttackMethods([
-
-            // 1-8 Apple Audio
-            "Apple Audio 1",
-            "Apple Audio 2",
-            "Apple Audio 3",
-            "Apple Audio 4",
-            "Apple Audio 5",
-            "Apple Audio 6",
-            "Apple Audio 7",
-            "Apple Audio 8",
-
-            // 9-13 Apple Setup
-            "Apple Setup 1",
-            "Apple Setup 2",
-            "Apple Setup 3",
-            "Apple Setup 4",
-            "Apple Setup 5",
-
-            // 14-19 Samsung
-            "Samsung Buds 1",
-            "Samsung Buds 2",
-            "Samsung Buds 3",
-            "Samsung Buds 4",
-            "Samsung Buds 5",
-            "Samsung Random",
-
-            // 20-24 Google
-            "Fast Pair 1",
-            "Fast Pair 2",
-            "Fast Pair 3",
-            "Fast Pair 4",
-            "Google Random",
-
-            // 25
-            "Mixed Random"
-        ]);
-
-        break;
+            if (methodRow) methodRow.style.display = "block";
+            setAttackMethods([
+                "Apple Audio 1", "Apple Audio 2", "Apple Audio 3", "Apple Audio 4",
+                "Apple Audio 5", "Apple Audio 6", "Apple Audio 7", "Apple Audio 8",
+                "Apple Setup 1", "Apple Setup 2", "Apple Setup 3", "Apple Setup 4", "Apple Setup 5",
+                "Samsung Buds 1", "Samsung Buds 2", "Samsung Buds 3", "Samsung Buds 4", "Samsung Buds 5", "Samsung Random",
+                "Fast Pair 1", "Fast Pair 2", "Fast Pair 3", "Fast Pair 4", "Google Random",
+                "Mixed Random"
+            ]);
+            break;
         case AttackTypeEnum.ATTACK_TYPE_CLONE:
             document.getElementById("attack_timeout").value = 5;
             if (noTimeoutNote) noTimeoutNote.style.display = "block";
@@ -410,14 +466,10 @@ function runAttack() {
     var timeoutMin     = parseInt(document.getElementById("attack_timeout").value) || 1;
     var timeoutSec     = timeoutEnabled ? Math.min(65535, timeoutMin * 60) : 0;
 
-    /* Beacon spam: byte 1 = count, byte 4 = mode (repurposed from ap_count)
-     * All other attacks: byte 1 = method, byte 4 = ap count */
     var attackMethod = (attackType === AttackTypeEnum.ATTACK_TYPE_BEACON_SPAM)
     ? (parseInt(document.getElementById("beacon_count").value) || 20)
     : (parseInt(document.getElementById("attack_method").value) || 0);
 
-    /* FIX #1: beaconMode was used in arr[4] without ever being defined, causing a
-     *          ReferenceError that silently aborts runAttack() before the XHR fires. */
     var beaconMode = (attackType === AttackTypeEnum.ATTACK_TYPE_BEACON_SPAM)
     ? (parseInt(document.getElementById("attack_method").value) || 0)
     : 0;
@@ -439,7 +491,7 @@ function runAttack() {
     arr[2] = timeoutSec & 0xFF;
     arr[3] = (timeoutSec >> 8) & 0xFF;
     arr[4] = (attackType === AttackTypeEnum.ATTACK_TYPE_BEACON_SPAM)
-    ? beaconMode    /* mode goes here; C reads attack_request->ap_count as mode */
+    ? beaconMode
     : ids.length;
     ids.forEach(function (id, i) { arr[5 + i] = id; });
 
@@ -449,10 +501,33 @@ function runAttack() {
     setRunningVisible(true);
     setResultVisible(false);
 
+    /* wall-clock anchor — immune to browser tab throttling */
+    ATTACK_START_TS    = Date.now();
+    ATTACK_TIMEOUT_SEC = timeoutSec;
+
     var beaconWrap = document.getElementById("beacon-timer-wrap");
     var simpleWrap = document.getElementById("simple-running-wrap");
     var noTOHint   = document.getElementById("no-timeout-hint");
+    var radioWarn  = document.getElementById("radio-warn");
+    var autoStop   = document.getElementById("autostop-note");
     var infoEl     = document.getElementById("running-attack-info");
+
+    /* single-radio takeover notice for attacks that kill the mgmt AP */
+    var seizesRadio = DISCONNECTS_MGMT_AP.indexOf(attackType) !== -1;
+    if (radioWarn) radioWarn.style.display = seizesRadio ? "block" : "none";
+
+    /* static auto-stop line: never lies, even if the tab was backgrounded */
+    if (autoStop) {
+        if (timeoutEnabled && timeoutSec > 0) {
+            autoStop.textContent = "⏱ This attack will stop automatically after " + timeoutMin + " min — no action needed.";
+            autoStop.style.display = "block";
+        } else if (isNoTimeout) {
+            autoStop.textContent = "⏱ This attack runs until it finishes on its own or you power off the ESP32.";
+            autoStop.style.display = "block";
+        } else {
+            autoStop.style.display = "none";
+        }
+    }
 
     if (attackType === AttackTypeEnum.ATTACK_TYPE_BEACON_SPAM) {
         beaconWrap.style.display = "block";
@@ -468,6 +543,7 @@ function runAttack() {
         simpleWrap.style.display = "block";
         stopProgressTimer();
         var disconnects = DISCONNECTS_MGMT_AP.indexOf(attackType) !== -1;
+        /* legacy hint only for non-radio-seizing types without timeout */
         if (noTOHint) {
             noTOHint.style.display = (disconnects && !timeoutEnabled && !isNoTimeout) ? "block" : "none";
         }
@@ -479,11 +555,22 @@ function runAttack() {
 
     if (infoEl) infoEl.textContent = attackTypeName(attackType);
 
+    /* watchdog keeps the page alive if the mgmt AP drops */
+    startLinkWatchdog();
+
     var oReq = new XMLHttpRequest();
     oReq.open("POST", "http://192.168.4.1/run-attack", true);
-    oReq.onload  = function () { setTimeout(getStatus, 500); };
+    oReq.onload  = function () {
+        hideLinkLost();
+        setTimeout(getStatus, 500);
+    };
     oReq.onerror = function () {
-        if (attackType !== AttackTypeEnum.ATTACK_TYPE_DOS        &&
+        /* Expected for radio-seizing attacks — the page stays in
+         * "running / reconnecting" mode until the ESP32 answers again. */
+        if (seizesRadio || attackType === AttackTypeEnum.ATTACK_TYPE_BT_PAYLOAD) {
+            showLinkLost();
+        } else if (
+            attackType !== AttackTypeEnum.ATTACK_TYPE_DOS        &&
             attackType !== AttackTypeEnum.ATTACK_TYPE_HANDSHAKE  &&
             attackType !== AttackTypeEnum.ATTACK_TYPE_EVIL_TWIN  &&
             attackType !== AttackTypeEnum.ATTACK_TYPE_CLONE) {
@@ -495,17 +582,28 @@ function runAttack() {
     return false;
 }
 
-/* ── Timer helpers ───────────────────────────────── */
+/* ── Timer helpers (wall-clock based) ────────────── */
 function stopProgressTimer() {
     if (running_poll) { clearInterval(running_poll); running_poll = null; }
 }
 
+/* recompute from Date.now() — correct even if setInterval was throttled */
+function refreshTimerFromClock() {
+    if (!ATTACK_START_TS) return;
+    var elapsed = Math.floor((Date.now() - ATTACK_START_TS) / 1000);
+    if (elapsed < 0) elapsed = 0;
+    if (attack_timeout !== Infinity && elapsed > attack_timeout) {
+        elapsed = attack_timeout;
+    }
+    time_elapsed = elapsed;
+    updateTimerDisplay();
+}
+
 function countProgress() {
+    refreshTimerFromClock();
     if (attack_timeout !== Infinity && time_elapsed >= attack_timeout) {
         stopProgressTimer();
     }
-    updateTimerDisplay();
-    time_elapsed++;
 }
 
 function updateTimerDisplay() {
@@ -517,10 +615,10 @@ function updateTimerDisplay() {
     elEl.textContent = formatTime(time_elapsed);
 
     if (attack_timeout === Infinity) {
-        if (ofEl) ofEl.textContent = "no timeout";
+        if (ofEl) ofEl.textContent = "stops on power off";
         if (path) path.setAttribute('stroke-dasharray', '100, 100');
     } else {
-        if (ofEl) ofEl.textContent = "/ " + formatTime(attack_timeout);
+        if (ofEl) ofEl.textContent = "stops after " + formatTime(attack_timeout);
         var progress = Math.min((time_elapsed / attack_timeout) * 100, 100);
         if (path) path.setAttribute('stroke-dasharray', progress + ', 100');
     }
@@ -548,6 +646,8 @@ function setResultVisible(v) {
 function showResult(status, attack_type, content_size, content) {
     stopProgressTimer();
     stopBtStatusPoll();
+    stopLinkWatchdog();
+    hideLinkLost();
     document.getElementById("running-section").style.display = "none";
     document.getElementById("result-section").style.display  = "block";
 
@@ -596,7 +696,7 @@ function showResult(status, attack_type, content_size, content) {
             '<a class="btn-primary" style="text-decoration:none;display:inline-block;margin-top:12px;"' +
             '   href="http://192.168.4.1/download-pass" download="wifi_passwords.txt">Download Passwords</a>' +
             '</div>';
-            break;
+     break;
         default:
             document.getElementById("result-body").innerHTML =
             '<p class="result-desc">Attack completed — type ' + attack_type + '.</p>';
@@ -694,7 +794,7 @@ function fetchEvilTwinResult() {
             '<div style="text-align:center;padding:20px 0;">' +
             '<div class="spinner"></div>' +
             '<p class="result-desc">Evil Twin running…</p>' +
-            '<p style="color:var(--acc-warn);margin-top:8px;font-size:0.85rem;">Wrong attempts: <strong>' + data.wrong_attempts + '</strong></p>' +
+            '<p class="et-attempts-live">Wrong attempts: <strong>' + data.wrong_attempts + '</strong></p>' +
             '</div>';
             setTimeout(fetchEvilTwinResult, 2000);
         } else {
@@ -713,6 +813,8 @@ function fetchEvilTwinResult() {
 function resetAttack() {
     stopProgressTimer();
     stopBtStatusPoll();
+    stopLinkWatchdog();
+    hideLinkLost();
     document.getElementById("result-section").style.display        = "none";
     document.getElementById("running-section").style.display       = "none";
     document.getElementById("attack-config-section").style.display = "block";
@@ -732,6 +834,7 @@ function getStatus() {
     oReq.timeout = 5000;
 
     oReq.onload = function () {
+        hideLinkLost();
         var buf = oReq.response;
         if (!buf || buf.byteLength === 0) return;
         var arr = new Uint8Array(buf);
@@ -750,7 +853,19 @@ function getStatus() {
             }
     };
 
-    oReq.onerror = function () { /* ESP32 may be running an attack that cuts the management AP */ };
+    oReq.onerror = function () {
+        /* mgmt AP may be down mid-attack — stay alive, retry in background */
+        var running = document.getElementById("running-section");
+        if (running && running.style.display !== "none") {
+            showLinkLost();
+        }
+    };
+    oReq.ontimeout = function () {
+        var running = document.getElementById("running-section");
+        if (running && running.style.display !== "none") {
+            showLinkLost();
+        }
+    };
     oReq.open("GET", "http://192.168.4.1/status", true);
     oReq.send();
 }
@@ -801,8 +916,7 @@ function closeDialog() {
     document.getElementById("dialog-overlay").classList.add("hidden");
 }
 
-
-/* ── BT Payload helpers ──────────────────────────── */
+/* ── BT Payload helpers ────────────────────────────── */
 function setBtPayload(payload) {
     fetch('/bt-payload-set', { method: 'POST', body: String(payload) })
     .then(function (response) {
@@ -922,12 +1036,12 @@ function loadCurrentUrl() {
     .then(function (r) { return r.json(); })
     .then(function (data) {
         if (data.url && data.url !== 'http://192.168.4.1/log') {
-            document.getElementById("use-custom-url").checked              = true;
-            document.getElementById("custom-url").value                    = data.url;
-            document.getElementById("custom-url-row").style.display        = "block";
+            document.getElementById("use-custom-url").checked       = true;
+            document.getElementById("custom-url").value             = data.url;
+            document.getElementById("custom-url-row").style.display = "block";
         } else {
-            document.getElementById("use-custom-url").checked              = false;
-            document.getElementById("custom-url-row").style.display        = "none";
+            document.getElementById("use-custom-url").checked       = false;
+            document.getElementById("custom-url-row").style.display   = "none";
         }
     })
     .catch(function () {});
@@ -981,4 +1095,69 @@ function attackTypeName(t) {
         case AttackTypeEnum.ATTACK_TYPE_BT_PAYLOAD:  return "BT Payload (HID)";
         default: return "Unknown (" + t + ")";
     }
+}
+
+
+function startBackgroundFx() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    /* boot splash */
+    var splash = document.getElementById("boot-splash");
+    var log    = document.getElementById("boot-log");
+    if (splash) {
+        var bootLines = [
+            "HYDRA-ESP BIOS v1.1.3",
+            "> mounting /dev/radio ......... OK",
+            "> loading attack modules ...... OK",
+            "> checking authorisation .... YOU",
+            "> interface ready_"
+        ];
+        var bi = 0, bootDone = false;
+        function bootFinish() {
+            if (bootDone) return;
+            bootDone = true;
+            splash.style.opacity = "0";
+            setTimeout(function () { if (splash.parentNode) splash.parentNode.removeChild(splash); }, 450);
+        }
+        splash.addEventListener("click", bootFinish);
+        (function bootStep() {
+            if (bootDone) return;
+            if (bi < bootLines.length) {
+                log.textContent += (bi ? "\n" : "") + bootLines[bi++];
+                setTimeout(bootStep, 180);
+            } else {
+                setTimeout(bootFinish, 350);
+            }
+        })();
+    }
+
+    var cv = document.getElementById("bg-fx");
+    if (!cv) return;
+    var ctx = cv.getContext("2d");
+    var chars = "01<>/{}$#=+*".split(""), drops = [], cols = 0;
+    function sizeFx() {
+        cv.width  = window.innerWidth;
+        cv.height = window.innerHeight;
+        cols = Math.floor(cv.width / 22);
+        drops = [];
+        for (var i = 0; i < cols; i++) drops[i] = Math.random() * -60;
+    }
+    sizeFx();
+    window.addEventListener("resize", sizeFx);
+    var tick = 0;
+    (function frame() {
+        tick++;
+        if (tick % 4 === 0) {
+            ctx.fillStyle = "rgba(5,7,10,0.16)";
+            ctx.fillRect(0, 0, cv.width, cv.height);
+            ctx.font = "14px 'IBM Plex Mono', monospace";
+            for (var i = 0; i < cols; i++) {
+                ctx.fillStyle = Math.random() < 0.025 ? "rgba(0,255,157,0.85)" : "rgba(0,255,157,0.18)";
+                ctx.fillText(chars[Math.random() * chars.length | 0], i * 22, drops[i] * 22);
+                if (drops[i] * 22 > cv.height && Math.random() > 0.976) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        requestAnimationFrame(frame);
+    })();
 }
