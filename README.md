@@ -10,7 +10,7 @@ Deauth. Evil Twin. BLE spam. HID payloads. One $5 board, one web UI, no laptop r
 </p>
 
 <p align="center">
-<a href="https://github.com/SameerAlSahab/Hydra-ESP/actions"><img src="https://img.shields.io/github/actions/workflow/status/SameerAlSahab/Hydra-ESP/build_page.yml?style=for-the-badge&logo=githubactions&logoColor=white&branch=main" alt="Build status" /></a>
+<a href="https://github.com/SameerAlSahab/Hydra-ESP/actions"><img src="https://img.shields.io/github/actions/workflow/status/SameerAlSahab/Hydra-ESP/build_release.yml?style=for-the-badge&logo=githubactions&logoColor=white&branch=main" alt="Build status" /></a>
 <a href="https://github.com/SameerAlSahab/Hydra-ESP/blob/main/LICENSE"><img src="https://img.shields.io/github/license/SameerAlSahab/Hydra-ESP?style=for-the-badge&color=FF4500" alt="License" /></a>
 <a href="https://github.com/SameerAlSahab/Hydra-ESP/stargazers"><img src="https://img.shields.io/github/stars/SameerAlSahab/Hydra-ESP?style=for-the-badge&color=FF4500&logo=github&logoColor=white" alt="Stars" /></a>
 <a href="https://github.com/SameerAlSahab/Hydra-ESP/forks"><img src="https://img.shields.io/github/forks/SameerAlSahab/Hydra-ESP?style=for-the-badge&color=FF4500&logo=github&logoColor=white" alt="Forks" /></a>
