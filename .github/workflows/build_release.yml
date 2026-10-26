@@ -56,11 +56,13 @@ jobs:
           test -f build/bootloader/bootloader.bin
           test -f build/partition_table/partition-table.bin
 
-          # The app binary is the only top-level .bin file build/ produces;
-          # this avoids hardcoding the project name (currently "projecthydra-32").
-          APP_BIN=$(find build -maxdepth 1 -name '*.bin' | head -n1)
-          if [ -z "$APP_BIN" ]; then
-            echo "::error::No app .bin found directly under build/"
+          # Ask ESP-IDF for the real app binary name instead of guessing.
+          # build/ also contains storage.bin, so a generic "find *.bin"
+          # can pick the wrong file.
+          APP_NAME=$(python3 -c "import json; print(json.load(open('build/project_description.json'))['app_bin'])")
+          APP_BIN="build/$APP_NAME"
+          if [ ! -f "$APP_BIN" ]; then
+            echo "::error::App binary $APP_BIN not found"
             exit 1
           fi
           echo "app_bin=$APP_BIN" >> "$GITHUB_OUTPUT"
@@ -76,7 +78,12 @@ jobs:
           else
             echo "::warning::build/storage.bin not found, skipping (check if SPIFFS image name differs)"
           fi
+
+          # Safety net: never publish a package missing a required file.
           cd flash-package
+          for f in bootloader.bin partition-table.bin "$(basename "${{ steps.locate.outputs.app_bin }}")"; do
+            test -f "$f" || { echo "::error::$f missing from package"; exit 1; }
+          done
           zip -r ../hydra-esp-flash-files.zip .
 
       - name: Upload flash files artifact
